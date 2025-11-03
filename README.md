@@ -1,4 +1,4 @@
-# JARVIS-optimizers
+# JARVIS-OPTIMIZERS
 
 
 **please follow this git flow**
@@ -16,3 +16,5 @@ git commit -m "commit message"  , commit message should follow the following con
 6) you need then to fetch the latest updates from origin so you can track the latest changes using --> git fetch origin
 7) you need then to make sure you are checked out on your feature branch , then apply -->  git rebase origin/main , this will update the base of your branch , as if you opened your branch from the latest commit on the main branch
 once rebased , you can now push your branch if you are done with your feature
+
+You can do this using vscode, you do not need to do it with command line. what is written is just for explanation.

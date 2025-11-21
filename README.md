@@ -18,3 +18,8 @@ git commit -m "commit message"  , commit message should follow the following con
 once rebased , you can now push your branch if you are done with your feature
 
 You can do this using vscode, you do not need to do it with command line. what is written is just for explanation.
+
+
+
+pip install -r requirements.txt
+

@@ -4,4 +4,4 @@ scikit-image
 scikit-learn
 matplotlib
 pandas
-
+opencv-python

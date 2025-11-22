@@ -122,53 +122,83 @@ LAB L channel = better for adaptive contrast / uneven illumination.
 L lightness, A green-red, B blue-yellow
 """
 
-img = cv2.imread('../data/input/JPEGImages/BloodImage_00003.jpg')
-rgb_img = convert_bgr2rgb(img)
-hsv_img = convert_rgb2hsv(rgb_img)
-
-H_channel = hsv_img[:, :, 0]
-S_channel = hsv_img[:, :, 1]
-V_channel = hsv_img[:, :, 2]
-gaussian_blur_V_channel = apply_gaussian_blur(V_channel, kernel_size=(5,5), sigma=0)
-median_blur_V_channel = apply_median_blur(gaussian_blur_V_channel, kernel_size=3)
-
-processed_hsv_img = hsv_img.copy()
-processed_hsv_img[:, :, 2] = median_blur_V_channel
-rgb_after_hsv_processing = cv2.cvtColor(processed_hsv_img, cv2.COLOR_HSV2RGB)
 
 
-lab_img = convert_rgb2Lab(rgb_after_hsv_processing)
-L_channel = lab_img[:, :, 0] 
-A_channel = lab_img[:, :, 1]
-B_channel = lab_img[:, :, 2]
-clahe_L_channel = apply_CLAHE(L_channel, cliplimit=2.0, tileGridSize=(8,8))
+def preprocess_img(img, gaussian_kernel_size=(5,5), gaussian_sigama=0, meidan_kernel_size=3, clahe_cliplimit=2.0, clahe_tileGridSize=(8,8)):
+    rgb_img = convert_bgr2rgb(img)
+    hsv_img = convert_rgb2hsv(rgb_img)
 
-processed_lab_img = lab_img.copy()
-processed_lab_img[:, :, 0] = clahe_L_channel
-processed_rgb_img = cv2.cvtColor(processed_lab_img, cv2.COLOR_LAB2RGB)
+    V_channel = hsv_img[:, :, 2]
+    gaussian_blur_V_channel = apply_gaussian_blur(V_channel, kernel_size=gaussian_kernel_size, sigma=gaussian_sigama)
+    median_blur_V_channel = apply_median_blur(gaussian_blur_V_channel, kernel_size=meidan_kernel_size)
+
+    processed_hsv_img = hsv_img.copy()
+    processed_hsv_img[:, :, 2] = median_blur_V_channel
+    rgb_after_hsv_processing = cv2.cvtColor(processed_hsv_img, cv2.COLOR_HSV2RGB)
+
+    lab_img = convert_rgb2Lab(rgb_after_hsv_processing)
+    L_channel = lab_img[:, :, 0] 
+    clahe_L_channel = apply_CLAHE(L_channel, cliplimit=clahe_cliplimit, tileGridSize=clahe_tileGridSize)
+
+    processed_lab_img = lab_img.copy()
+    processed_lab_img[:, :, 0] = clahe_L_channel
+    processed_rgb_img = cv2.cvtColor(processed_lab_img, cv2.COLOR_LAB2RGB)
+
+    return processed_rgb_img
+
+
+# img = cv2.imread('../data/input/JPEGImages/BloodImage_00003.jpg')
+# processed_img = preprocess_img(img)
+# show_images([convert_bgr2rgb(img), processed_img], titles=['Original Image', 'Preprocessed Image'], figsize=(12,6))
+
+
+#-----------------------testing the preprocessing step-----------------------#
+# rgb_img = convert_bgr2rgb(img)
+# hsv_img = convert_rgb2hsv(rgb_img)
+
+# H_channel = hsv_img[:, :, 0]
+# S_channel = hsv_img[:, :, 1]
+# V_channel = hsv_img[:, :, 2]
+# gaussian_blur_V_channel = apply_gaussian_blur(V_channel, kernel_size=(5,5), sigma=0)
+# median_blur_V_channel = apply_median_blur(gaussian_blur_V_channel, kernel_size=3)
+
+# processed_hsv_img = hsv_img.copy()
+# processed_hsv_img[:, :, 2] = median_blur_V_channel
+# rgb_after_hsv_processing = cv2.cvtColor(processed_hsv_img, cv2.COLOR_HSV2RGB)
+
+
+# lab_img = convert_rgb2Lab(rgb_after_hsv_processing)
+# L_channel = lab_img[:, :, 0] 
+# A_channel = lab_img[:, :, 1]
+# B_channel = lab_img[:, :, 2]
+# clahe_L_channel = apply_CLAHE(L_channel, cliplimit=2.0, tileGridSize=(8,8))
+
+# processed_lab_img = lab_img.copy()
+# processed_lab_img[:, :, 0] = clahe_L_channel
+# processed_rgb_img = cv2.cvtColor(processed_lab_img, cv2.COLOR_LAB2RGB)
 
 
 
-imgs_to_show_1 = [rgb_img, hsv_img, H_channel, S_channel, V_channel]
-titles_1 = ['Original RGB Image', 'HSV Image', 'H Channel', 'S Channel', 'V Channel']
-cmaps_1 = [None, None, 'hsv', 'gray', 'gray']
-show_images(imgs_to_show_1, titles=titles_1, cmaps=cmaps_1, figsize=(20,8))
+# imgs_to_show_1 = [rgb_img, hsv_img, H_channel, S_channel, V_channel]
+# titles_1 = ['Original RGB Image', 'HSV Image', 'H Channel', 'S Channel', 'V Channel']
+# cmaps_1 = [None, None, 'hsv', 'gray', 'gray']
+# show_images(imgs_to_show_1, titles=titles_1, cmaps=cmaps_1, figsize=(20,8))
 
-imgs_to_show_2 = [rgb_img, rgb_after_hsv_processing,  V_channel, gaussian_blur_V_channel, median_blur_V_channel]
-titles_2 = ['Original RGB Image', 'rgb_after_hsv_processing','Original V Channel',  'After Gaussian Blur', 'After Median Blur']
-cmaps_2 = [None, None, 'gray', 'gray', 'gray']
-show_images(imgs_to_show_2, titles=titles_2, cmaps=cmaps_2, figsize=(20,8))
+# imgs_to_show_2 = [rgb_img, rgb_after_hsv_processing,  V_channel, gaussian_blur_V_channel, median_blur_V_channel]
+# titles_2 = ['Original RGB Image', 'rgb_after_hsv_processing','Original V Channel',  'After Gaussian Blur', 'After Median Blur']
+# cmaps_2 = [None, None, 'gray', 'gray', 'gray']
+# show_images(imgs_to_show_2, titles=titles_2, cmaps=cmaps_2, figsize=(20,8))
 
 
-imgs_to_show_3 = [rgb_after_hsv_processing, L_channel, clahe_L_channel, A_channel, B_channel]
-titles_3 = ['RGB after HSV Processing', 'Original L Channel', 'CLAHE L Channel', 'A Channel', 'B Channel']
-cmaps_3 = [None, 'gray', 'gray', 'gray', 'gray']
-show_images(imgs_to_show_3, titles=titles_3, cmaps=cmaps_3, figsize=(20,8))
+# imgs_to_show_3 = [rgb_after_hsv_processing, L_channel, clahe_L_channel, A_channel, B_channel]
+# titles_3 = ['RGB after HSV Processing', 'Original L Channel', 'CLAHE L Channel', 'A Channel', 'B Channel']
+# cmaps_3 = [None, 'gray', 'gray', 'gray', 'gray']
+# show_images(imgs_to_show_3, titles=titles_3, cmaps=cmaps_3, figsize=(20,8))
 
-imgs_to_show_4 = [rgb_img, rgb_after_hsv_processing, processed_rgb_img]
-titles_4 = ['Original RGB Image', 'After HSV V Channel Processing', 'After CLAHE on L Channel']
-cmaps_4 = [None, None, None]
-show_images(imgs_to_show_4, titles=titles_4, cmaps=cmaps_4, figsize=(16,6))
+# imgs_to_show_4 = [rgb_img, rgb_after_hsv_processing, processed_rgb_img]
+# titles_4 = ['Original RGB Image', 'After HSV V Channel Processing', 'After CLAHE on L Channel']
+# cmaps_4 = [None, None, None]
+# show_images(imgs_to_show_4, titles=titles_4, cmaps=cmaps_4, figsize=(16,6))
 
 
 

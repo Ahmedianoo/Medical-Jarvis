@@ -49,15 +49,15 @@ Thumbs.db
 # Data Files
 # ===============================================
 # Raw datasets (too large for Git)
-datasets/
-data/
-*.csv
-*.xml
-*.jpg
-*.jpeg
-*.png
-*.tif
-*.bmp
+# datasets/
+# data/
+# *.csv
+# *.xml
+# *.jpg
+# *.jpeg
+# *.png
+# *.tif
+# *.bmp
 
 # ===============================================
 # Models & Training Artifacts

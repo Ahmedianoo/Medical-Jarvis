@@ -72,13 +72,11 @@ def segment_RBC(img):
     pass
 
 
-img = cv2.imread('../data/input/JPEGImages/BloodImage_00003.jpg')
-img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-preprocessed_img = preprocess_img(img)
-thresholding_RBC_mask = thresholding_RBC(preprocessed_img)
 
-
-
-
-show_images([img_rgb, preprocessed_img, thresholding_RBC_mask], ['Original Image', 'Preprocessed Image', 'thresholding_RBC_mask'], [None, None, 'gray'])
+# this part is for test till the work is done i put it here if you want to see how it is working, the flow i mean, delete it if you want
+# img = cv2.imread('../data/input/JPEGImages/BloodImage_00003.jpg')
+# img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+# preprocessed_img = preprocess_img(img)
+# thresholding_RBC_mask = thresholding_RBC(preprocessed_img)
+# show_images([img_rgb, preprocessed_img, thresholding_RBC_mask], ['Original Image', 'Preprocessed Image', 'thresholding_RBC_mask'], [None, None, 'gray'])
 

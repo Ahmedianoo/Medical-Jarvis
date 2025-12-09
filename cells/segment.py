@@ -134,8 +134,3 @@ def segment_RBC(img):
    sure_bg_vis = sure_bg.copy()
 
    return result, segmented
-
-
-
-
-

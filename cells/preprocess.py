@@ -42,34 +42,6 @@ scikit-image is still used, but for specific tasks: watershed implementation, re
 
 ===============================================================
 
-
-✔ Step 1 — Load image + convert to RGB
-
-→ verify channels with Matplotlib.
-
-✔ Step 2 — Convert RGB to HSV
-
-→ plot H, S, V channels.
-→ observe RBC hue cluster.
-
-✔ Step 3 — Apply Gaussian + median
-
-→ try several kernel sizes
-→ make sure platelets are not lost.
-
-✔ Step 4 — Apply CLAHE on the L channel (LAB)
-
-→ compare before/after
-→ check clarity of RBC edges.
-
-✔ Step 5 — Try illumination correction on sample images
-
-→ if it improves thresholding → keep it
-→ if platelets disappear → disable
-
-✔ Step 6 — Save preprocessed output to feed segmentation
-
-→ produce RGB + HSV versions.
 """
 import cv2
 import numpy as np

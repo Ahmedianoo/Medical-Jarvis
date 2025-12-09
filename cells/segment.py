@@ -91,75 +91,51 @@ def thresholding_RBC(preprocessed_img, lower_red1=np.array([0, 10, 45]), upper_r
    return RBC_mask
 
 def segment_RBC(img):
-    pass
+   #this function takes the img, and return the result which is the image with the RBCs surrounded with redlines, and the watershed result
+   preprocessed_img = preprocess_img(img)
+   thresholding_RBC_mask = thresholding_RBC(preprocessed_img)
+
+   kernel_opening = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+   img_opening = cv2.morphologyEx(thresholding_RBC_mask, cv2.MORPH_OPEN, kernel_opening) #for removing small noise
+   kernel_closing = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (4, 4))
+   img_closing = cv2.morphologyEx(img_opening, cv2.MORPH_CLOSE, kernel_closing) #for closing small holes in RBCs
+   distance = cv2.distanceTransform(img_closing, cv2.DIST_L2, 5)
+
+   _, labels = cv2.connectedComponents(img_closing)
+
+   sure_fg = np.zeros_like(distance, dtype=np.uint8)
+   for i in range(1, labels.max()+1):
+      component = distance * (labels == i)  # extract distance values of this RBC
+      t = 0.3 * component.max()           # threshold for this RBC
+      sure_fg[component > t] = 255
+
+   kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+   sure_bg = cv2.dilate(img_closing, kernel, iterations=3)
+
+   unknown = cv2.subtract(sure_bg, sure_fg)
+
+   _, markers = cv2.connectedComponents(sure_fg)
+   markers = markers + 1
+   markers[unknown == 255] = 0
 
 
 
-# this part is for test till the work is done i put it here if you want to see how it is working, the flow i mean, delete it if you want
-img = cv2.imread('../data/input/JPEGImages/BloodImage_00020.jpg')
-img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-preprocessed_img = preprocess_img(img)
-thresholding_RBC_mask = thresholding_RBC(preprocessed_img)
+   hessian_resp = get_hessian_response(preprocessed_img)
+   hessian_color  = cv2.cvtColor(hessian_resp, cv2.COLOR_GRAY2BGR)
 
-kernel_opening = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
-img_opening = cv2.morphologyEx(thresholding_RBC_mask, cv2.MORPH_OPEN, kernel_opening) #for removing small noise
-# kernel_dilation = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (4, 4))
-# img_dilation =  cv2.morphologyEx(img_opening, cv2.MORPH_DILATE , kernel_dilation)
-kernel_closing = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (4, 4))
-img_closing = cv2.morphologyEx(img_opening, cv2.MORPH_CLOSE, kernel_closing) #for closing small holes in RBCs
+   segmented = cv2.watershed(hessian_color, markers)
+   result = preprocessed_img.copy()
+   result[segmented == -1] = [255, 0, 0]
 
 
+   distance_norm = cv2.normalize(distance, None, 0, 255, cv2.NORM_MINMAX)
+   distance_norm = np.uint8(distance_norm)
+   sure_fg_vis = sure_fg.copy()
+   sure_bg_vis = sure_bg.copy()
 
-distance = cv2.distanceTransform(img_closing, cv2.DIST_L2, 5)
-
-_, labels = cv2.connectedComponents(img_closing)
-
-sure_fg = np.zeros_like(distance, dtype=np.uint8)
-for i in range(1, labels.max()+1):
-    component = distance * (labels == i)  # extract distance values of this RBC
-    t = 0.3 * component.max()           # threshold for this RBC
-    sure_fg[component > t] = 255
-
-kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
-sure_bg = cv2.dilate(img_closing, kernel, iterations=3)
-
-unknown = cv2.subtract(sure_bg, sure_fg)
-
-_, markers = cv2.connectedComponents(sure_fg)
-markers = markers + 1
-markers[unknown == 255] = 0
+   return result, segmented
 
 
 
-hessian_resp = get_hessian_response(preprocessed_img)
 
-hessian_color  = cv2.cvtColor(hessian_resp, cv2.COLOR_GRAY2BGR)
-
-
-
-segmented = cv2.watershed(hessian_color, markers)
-result = preprocessed_img.copy()
-result[segmented == -1] = [255, 0, 0]
-
-
-distance_norm = cv2.normalize(distance, None, 0, 255, cv2.NORM_MINMAX)
-distance_norm = np.uint8(distance_norm)
-sure_fg_vis = sure_fg.copy()
-sure_bg_vis = sure_bg.copy()
-
-
-show_images(
-    [distance_norm, sure_fg_vis, sure_bg_vis, unknown, hessian_resp],
-    ['Distance Transform', 'Sure FG (markers)', 'Sure BG', 'Unknown', 'hessian_resp'],
-    ['gray', 'gray', 'gray', 'gray', 'gray']
-)
-
-show_images([segmented, result, hessian_resp, img_rgb, preprocessed_img], 
-            ['segmented', 'result', 'hessian_resp', 'img_rgb', 'preprocessed_img'], 
-            [None, 'gray', 'gray', None, None])
-
-
-show_images([img_rgb, preprocessed_img, thresholding_RBC_mask, img_opening, img_closing], 
-            ['Original Image', 'Preprocessed Image', 'thresholding_RBC_mask', 'opening', 'closing'], 
-            [None, None, 'gray', 'gray', 'gray'])
 

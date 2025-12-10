@@ -53,6 +53,7 @@ from matplotlib import pyplot as plt
 from scipy import ndimage
 import os
 from utils.helpers import show_images
+from skimage.measure import regionprops, label
 from preprocess import preprocess_img
 from skimage.filters import frangi
 
@@ -110,7 +111,13 @@ def thresholding_RBC(preprocessed_img, lower_red1=np.array([0, 10, 45]), upper_r
    return RBC_mask
 
 def segment_RBC(img):
-   #this function takes the img, and return the result which is the image with the RBCs surrounded with redlines, and the watershed result
+   
+   """
+      this function takes the img, and return the result which is the image with the RBCs surrounded with redlines, and the watershed result
+      it basically starts with preprocessing and the thresholding with hue to extract RBCc
+      and then it performs the distance transform then applying watershed
+      the watershed uses the markers from the distance transform and the stopping boundries from the hessian filter
+   """
 
    #preprocessing
    preprocessed_img = preprocess_img(img, clahe_cliplimit=3, clahe_tileGridSize=(4, 4))
@@ -199,5 +206,24 @@ def segment_RBC(img):
    return result, segmented
 
 
-img = cv2.imread('../data/input/JPEGImages/BloodImage_00014.jpg')
-segment_RBC(img)
+img = cv2.imread('../data/input/JPEGImages/BloodImage_00003.jpg') #14
+img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+_, watershed_img = segment_RBC(img)
+
+RBCs_mask = np.zeros_like(watershed_img, dtype = np.uint8)
+RBCs_mask = np.where(watershed_img > 1, watershed_img, 0)
+
+RBCs_labels = label(RBCs_mask)
+
+
+resulted_boxes = img_rgb.copy()
+
+for cell in regionprops(RBCs_labels):
+   y0, x0, y1, x1 = cell.bbox
+   cv2.rectangle(resulted_boxes, (x0, y0), (x1, y1), (0, 255, 0), 1)
+   text_pos = (x0, max(y0 - 5, 0))  
+   cv2.putText(resulted_boxes, "RBC", text_pos, cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1, cv2.LINE_AA)
+
+show_images([resulted_boxes, _, watershed_img], ['resulted_boxes', 'result', 'segmented'], [None, None, 'gray'])
+
+

@@ -98,8 +98,11 @@ def apply_hessian_frangi(img):
 
 def thresholding_RBC(preprocessed_img, lower_red1=np.array([0, 10, 45]), upper_red1= np.array([10, 255, 255]),
                      lower_red2=np.array([160, 10, 45]), upper_red2= np.array([179, 255, 255])):
-   # pass preprocessed image to this function 
-   # it returns a binary mask for RBCs based on HSV thresholding
+   """
+      pass preprocessed image to this function 
+      it returns a binary mask for RBCs based on HSV thresholding
+   """
+
    hsv_processed_img = cv2.cvtColor(preprocessed_img, cv2.COLOR_RGB2HSV)
       
    # the default values for thresholding ranges for the three channels H, S, V are tried and tested on image 00003 
@@ -206,24 +209,99 @@ def segment_RBC(img):
    return result, segmented
 
 
-img = cv2.imread('../data/input/JPEGImages/BloodImage_00003.jpg') #14
-img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-_, watershed_img = segment_RBC(img)
+def segment_label_RBC(img):
+   """
+      this function takes the img and then it apply the segmentation (segment_RBC function)
+      after that we get the labels of the watershed image -> remove noise, merge broken cells
+      then return the image with the boxes and the updated and enhanced labels
+   """
+   
+   #segmentation
+   cells_boundries, watershed_img = segment_RBC(img)
 
-RBCs_mask = np.zeros_like(watershed_img, dtype = np.uint8)
-RBCs_mask = np.where(watershed_img > 1, watershed_img, 0)
+   """
+      getting the RBCs mask by putting each unknown or background in the watershed will be zero and other regions remain the same
+   """
+   RBCs_mask = np.zeros_like(watershed_img, dtype = np.uint8)
+   RBCs_mask = np.where(watershed_img > 1, watershed_img, 0)
 
-RBCs_labels = label(RBCs_mask)
+   """
+      labeling the different cells in the mask
+   """
+   RBCs_labels = label(RBCs_mask)
+
+   img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+   resulted_boxes = img_rgb.copy()
+
+   
+   min_area = 1200   # min area a red blood cell could have
+   max_distance = 63 # distance between centers to merges small fragments
+   noise_area = 120  # all labels with area below this one is removed
+
+   """
+      regionprops, returns the labels but with some features. like area and centroids
+   """
+   cells = regionprops(RBCs_labels)
+
+   """
+      removing the noise before starting the merge process, so the noise is not merged
+      the RBCs_labels must be updated each time we make modifications to the labels
+      and the cells(region props) has to be updated as well
+   """
+   for cell in cells:
+      if cell.area < noise_area:
+         RBCs_labels[RBCs_labels == cell.label] = 0  
+
+   cells = regionprops(RBCs_labels) 
 
 
-resulted_boxes = img_rgb.copy()
+   """
+      here we are trying to merge small detected fragments to create the original cell
+      first we get the area of the current cell, if it is below the threshold, it could be merged but we must check if there is near cells first
+      and the cells must be updated each time a merge operation happen that's why we break many loops
+   """
+   while True:
+      updated = False
+      cells = regionprops(RBCs_labels)
+      for cell in cells:
+         cx_current, cy_current = cell.centroid
+         if cell.area < min_area: 
 
-for cell in regionprops(RBCs_labels):
-   y0, x0, y1, x1 = cell.bbox
-   cv2.rectangle(resulted_boxes, (x0, y0), (x1, y1), (0, 255, 0), 1)
-   text_pos = (x0, max(y0 - 5, 0))  
-   cv2.putText(resulted_boxes, "RBC", text_pos, cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1, cv2.LINE_AA)
+            for other_cell in cells:
 
-show_images([resulted_boxes, _, watershed_img], ['resulted_boxes', 'result', 'segmented'], [None, None, 'gray'])
+               if cell.label == other_cell.label:
+                  continue
+
+               cx_other, cy_other = other_cell.centroid
+               distance = np.sqrt((cx_current - cx_other)**2 + (cy_current-cy_other)**2)
+               if distance < max_distance:
+                  RBCs_labels[RBCs_labels == cell.label] = other_cell.label 
+                  updated = True
+                  break
+
+            if updated:
+               break
+      if not updated:
+         break         
+         
+
+
+
+
+   """
+      getting the resulted boxes for the most updated cells and drawing green rectangle with text "RBC" above this rectangle
+   """
+   for cell in cells:
+      y0, x0, y1, x1 = cell.bbox
+      cv2.rectangle(resulted_boxes, (x0, y0), (x1, y1), (0, 255, 0), 1)
+      text_pos = (x0, max(y0 - 5, 0))  
+      cv2.putText(resulted_boxes, "RBC", text_pos, cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1, cv2.LINE_AA)
+
+   return resulted_boxes, RBCs_labels
+   
+
+# img = cv2.imread('../data/input/JPEGImages/BloodImage_00014.jpg')
+# resulted_boxes, RBCs_labels = segment_label_RBC(img)
+# show_images([resulted_boxes], ['resulted_boxes'], [None])
 
 

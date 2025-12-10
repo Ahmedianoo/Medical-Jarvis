@@ -58,21 +58,40 @@ from skimage.filters import frangi
 
 
 
-def get_hessian_response(img):
-    gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+def apply_hessian_frangi(img):
+    # frangi uses hessian but makes sure the detected part is a part of a structure
 
-    fr = frangi(
-        gray,
-        sigmas=range(1, 6),   
-        alpha=0.2,
-        beta=0.2,
-        gamma=5
-    )
+    # it operates only on single channel imgs
+    img_gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 
-    fr = cv2.normalize(fr, None, 0, 255, cv2.NORM_MINMAX)
-    fr = np.uint8(fr)
-   #  fr = cv2.equalizeHist(fr)
-    return fr
+    #the frangi filter uses the hessian matrix of the img  
+    img_frangi = frangi(img_gray, sigmas=range(1, 8), alpha=0.2, beta=0.2, gamma=5)
+    """
+    sigmas: controls the scale of structures detected, each sigma in the range is applied, it actually expresses gaussian blur
+      low sigma: detects small thin edges, small detail, small blood cells, noise.
+      medium sigma: detects normal cell boundaries.
+      high sigma: detects larger, thicker shapes, thicker edges.
+
+    alpha:
+      low alpha: more sensitive to curved round structures and more strict in rejecting noise 
+
+    beta:
+      low beta: highlights strong edges more, rejects weak edges,  
+      high beta: includes more noise and soft boundaries, can detect faint edges
+
+    gamma:
+      low: includes more noise, keeps low contrast regions
+      high: suppresses noise, keeps only strong contrast regions, 
+    """
+
+    img_frangi = cv2.normalize(img_frangi, None, 0, 255, cv2.NORM_MINMAX)
+    img_frangi = np.uint8(img_frangi)
+    """
+      frangi outputs a float image => 0 -> 1
+      watershed requires 8-bit 0 -> 255
+    """
+
+    return img_frangi
 
 
 
@@ -92,45 +111,93 @@ def thresholding_RBC(preprocessed_img, lower_red1=np.array([0, 10, 45]), upper_r
 
 def segment_RBC(img):
    #this function takes the img, and return the result which is the image with the RBCs surrounded with redlines, and the watershed result
-   preprocessed_img = preprocess_img(img)
+
+   #preprocessing
+   preprocessed_img = preprocess_img(img, clahe_cliplimit=3, clahe_tileGridSize=(4, 4))
+
+   #apllying thersholding 
    thresholding_RBC_mask = thresholding_RBC(preprocessed_img)
 
+   #opening and closing
    kernel_opening = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
    img_opening = cv2.morphologyEx(thresholding_RBC_mask, cv2.MORPH_OPEN, kernel_opening) #for removing small noise
-   kernel_closing = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (4, 4))
+   kernel_closing = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
    img_closing = cv2.morphologyEx(img_opening, cv2.MORPH_CLOSE, kernel_closing) #for closing small holes in RBCs
+
+
    distance = cv2.distanceTransform(img_closing, cv2.DIST_L2, 5)
+   # distance_smooth = cv2.GaussianBlur(distance, (5,5), 0)
 
-   _, labels = cv2.connectedComponents(img_closing)
+   """
+      how far this pixel is from the nearest background pixel
+      the center of the RBC has the maximum distance value, the edges of the RBC have distance close to 0
 
-   sure_fg = np.zeros_like(distance, dtype=np.uint8)
+      cv2.DIST_L2 = Euclidean distance
+      third paramater = size of the neighborhood used to approximate the distance
+   """
+
+  
+   num_labels, labels = cv2.connectedComponents(img_closing)
+   """
+      dividing the components of the mask to apply local thresholding to get better results for the watershed
+      it scans the binary mask and assigns a unique label to each connected region
+
+      num_labels includes the background
+   """
+
+
+   sure_foreground = np.zeros_like(distance, dtype=np.uint8)
    for i in range(1, labels.max()+1):
-      component = distance * (labels == i)  # extract distance values of this RBC
-      t = 0.3 * component.max()           # threshold for this RBC
-      sure_fg[component > t] = 255
+      component = distance * (labels == i)  # extract distance values of this RBC - component, that have this certain label with this certain dist
+      t = 0.325 * component.max()           # threshold for this RBC - component
+      sure_foreground[component > t] = 255
 
-   kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+
+   kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (4, 4))
    sure_bg = cv2.dilate(img_closing, kernel, iterations=3)
 
-   unknown = cv2.subtract(sure_bg, sure_fg)
+   unknown = cv2.subtract(sure_bg, sure_foreground)
 
-   _, markers = cv2.connectedComponents(sure_fg)
+   _, markers = cv2.connectedComponents(sure_foreground)
    markers = markers + 1
    markers[unknown == 255] = 0
 
+   """
+      sure foreground to make get the centers of the RBCs
+      sure background to include the background with us
+      unknown will be everything except the forground
+      the watershed uses this unknown region to grow in
+      and it needs those values: unknown: 0 ,background: 1, cells: 2, 3, 4, ...
+   """
 
 
-   hessian_resp = get_hessian_response(preprocessed_img)
-   hessian_color  = cv2.cvtColor(hessian_resp, cv2.COLOR_GRAY2BGR)
+   """
+      think of making xor between the hessian response and the mask before getting the distance transform to isolate components more effectively
+   """
+   hessian_response = apply_hessian_frangi(preprocessed_img)
+
+   #the watershed works on 3 channels imgs
+   hessian_color  = cv2.cvtColor(hessian_response, cv2.COLOR_GRAY2BGR)
 
    segmented = cv2.watershed(hessian_color, markers)
+
+   """
+      watershed uses the markers to grow, and uses the hessian borders as stopping borders
+      it does return labels of the pixels with those values
+      boundry of watershed: -1, ,background: 1, cells: 2, 3, 4, ...
+   """
+
    result = preprocessed_img.copy()
    result[segmented == -1] = [255, 0, 0]
 
 
-   distance_norm = cv2.normalize(distance, None, 0, 255, cv2.NORM_MINMAX)
-   distance_norm = np.uint8(distance_norm)
-   sure_fg_vis = sure_fg.copy()
-   sure_bg_vis = sure_bg.copy()
+   #the none parameter is optional, we could put an image instead of it to return the value to it 
+   # distance_norm = cv2.normalize(distance, None, 0, 255, cv2.NORM_MINMAX)
+   # distance_norm = np.uint8(distance_norm)
+   # show_images([result, segmented], ['result', 'segmented'], [None, None])
 
    return result, segmented
+
+
+img = cv2.imread('../data/input/JPEGImages/BloodImage_00014.jpg')
+segment_RBC(img)

@@ -45,6 +45,17 @@ NOTES:
 color picker may be useful for threshold selection: https://redketchup.io/color-picker
 hue colors in opencv range from 0-179 as it uses 8 bits representation. 
  - so if you selected a color in color selector divide the hue value by 2 to get the corresponding opencv hue value.
+
+
+Explanantion of cv2.connectedComponentsWithStats(mask):
+- White pixels touching each other (8-neighbourhood) form a component (a blob).
+- Give a label to each blob, and Measure its area (how many white pixels),
+  then we can delete all blobs that are “too big” (WBCs) or “too small” (noise) and keep the “medium–small” ones (platelets).
+- Returns:
+   - num_labels: number of connected components (blobs) found (including background)
+   - labels: an image where each pixel has a label corresponding to its blob
+   - stats: for each label, gives [x, y, width, height, area]
+   - centroids: (x, y) coordinates of the center of each blob
 """
 import cv2
 import numpy as np
@@ -113,8 +124,9 @@ def thresholding_RBC(preprocessed_img, lower_red1=np.array([0, 10, 45]), upper_r
    RBC_mask = mask1 + mask2
    return RBC_mask
 
+
 def segment_RBC(img):
-   
+    
    """
       this function takes the img, and return the result which is the image with the RBCs surrounded with redlines, and the watershed result
       it basically starts with preprocessing and the thresholding with hue to extract RBCc
@@ -304,4 +316,72 @@ def segment_label_RBC(img):
 # resulted_boxes, RBCs_labels = segment_label_RBC(img)
 # show_images([resulted_boxes], ['resulted_boxes'], [None])
 
+
+def segmenting_purple_cells(preprocessed_img):
+   hsv_preprocessed_img = cv2.cvtColor(preprocessed_img, cv2.COLOR_RGB2HSV)
+   # Platelets range from 250 to 320 degrees in hue channel
+   # cv2 only range from 0 to 180, so purple range is from 115 to 130 in cv2 hue scale
+   lower_purple = np.array([115, 40, 40])
+   upper_purple = np.array([130, 255, 255])
+
+   # inRange, checks (lower_purple <= pixel <= upper_purple) for each pixel
+   # if true, pixel value is set to 255, else 0
+   mask = cv2.inRange(hsv_preprocessed_img, lower_purple, upper_purple)
+
+   kernel = np.ones((3, 3), np.uint8)
+   mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel, iterations=2)  # remove any small white noise
+   mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel, iterations=2) # close small black holes in the detected purple cells
+
+   result = cv2.bitwise_and(preprocessed_img, preprocessed_img, mask=mask)
+   return result, mask
+
+
+def platelet(mask, min_area=20, max_area=500):
+   num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(mask)
+
+   plat_mask = np.zeros_like(mask)
+
+   # Index 0 is background label (not needed), so we start at index 1
+   for i in range(1, num_labels):  
+      area = stats[i, cv2.CC_STAT_AREA]
+      if min_area < area < max_area:
+         plat_mask[labels == i] = 255
+
+   return plat_mask
+
+
+def wbc(mask, min_area=800, max_area=None):
+    num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(mask)
+
+    wbc_mask = np.zeros_like(mask)
+
+   # Index 0 is background label (not needed), so we start at index 1
+    for i in range(1, num_labels):
+        area = stats[i, cv2.CC_STAT_AREA]
+        if area >= min_area and (max_area is None or area <= max_area):
+            wbc_mask[labels == i] = 255
+
+    return wbc_mask
+
+
+# Tetsing Segmentation for Purple Cells (WBCs and Platelets)
+# ----------------------------------------------------------------
+#img = cv2.imread('../data/input/JPEGImages/BloodImage_00003.jpg')
+#img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+#preprocessed_img = preprocess_img(img)
+#img_purple, purple_mask = segmenting_purple_cells(preprocessed_img)
+#plat_mask = platelet(purple_mask)
+#wbc_mask = wbc(purple_mask)
+#show_images([img_rgb, preprocessed_img, img_purple, purple_mask, plat_mask, wbc_mask], ['Original Image', 'Preprocessed Image', 'Purple Cells Segmented', 'Purple Cells Mask', 'Platelet Mask', 'wbc mask'], [None, None, None, 'gray', 'gray', 'gray'])
+
+# img = cv2.imread('../data/input/JPEGImages/BloodImage_00014.jpg')
+# resulted_boxes, RBCs_labels = segment_label_RBC(img)
+# show_images([resulted_boxes], ['resulted_boxes'], [None])
+
+# this part is for test till the work is done i put it here if you want to see how it is working, the flow i mean, delete it if you want
+# img = cv2.imread('../data/input/JPEGImages/BloodImage_00003.jpg')
+# img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+# preprocessed_img = preprocess_img(img)
+# thresholding_RBC_mask = thresholding_RBC(preprocessed_img)
+# show_images([img_rgb, preprocessed_img, thresholding_RBC_mask], ['Original Image', 'Preprocessed Image', 'thresholding_RBC_mask'], [None, None, 'gray'])
 

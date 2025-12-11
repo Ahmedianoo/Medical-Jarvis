@@ -221,7 +221,7 @@ def segment_RBC(img):
    return result, segmented
 
 
-def segment_label_RBC(img):
+def label_RBC(img):
    """
       this function takes the img and then it apply the segmentation (segment_RBC function)
       after that we get the labels of the watershed image -> remove noise, merge broken cells
@@ -294,23 +294,17 @@ def segment_label_RBC(img):
             if updated:
                break
       if not updated:
-         break         
-         
-
-
-
-
+         break
    """
       getting the resulted boxes for the most updated cells and drawing green rectangle with text "RBC" above this rectangle
    """
-   for cell in cells:
-      y0, x0, y1, x1 = cell.bbox
-      cv2.rectangle(resulted_boxes, (x0, y0), (x1, y1), (0, 255, 0), 1)
-      text_pos = (x0, max(y0 - 5, 0))  
-      cv2.putText(resulted_boxes, "RBC", text_pos, cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1, cv2.LINE_AA)
+   # for cell in cells:
+   #    y0, x0, y1, x1 = cell.bbox
+   #    cv2.rectangle(resulted_boxes, (x0, y0), (x1, y1), (0, 255, 255), 1)
+   #    text_pos = (x0, max(y0 - 5, 0))
+   #    cv2.putText(resulted_boxes, "RBC", text_pos, cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 255), 1, cv2.LINE_AA)
 
    return resulted_boxes, RBCs_labels
-   
 
 # img = cv2.imread('../data/input/JPEGImages/BloodImage_00014.jpg')
 # resulted_boxes, RBCs_labels = segment_label_RBC(img)
@@ -336,13 +330,13 @@ def segmenting_purple_cells(preprocessed_img):
    return result, mask
 
 
-def platelet(mask, min_area=20, max_area=500):
-   num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(mask)
-
-   plat_mask = np.zeros_like(mask)
+def platelet(preprocessed_img, min_area=20, max_area=500):
+   _, purple_mask = segmenting_purple_cells(preprocessed_img)
+   num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(purple_mask)
+   plat_mask = np.zeros_like(purple_mask)
 
    # Index 0 is background label (not needed), so we start at index 1
-   for i in range(1, num_labels):  
+   for i in range(1, num_labels):
       area = stats[i, cv2.CC_STAT_AREA]
       if min_area < area < max_area:
          plat_mask[labels == i] = 255
@@ -350,38 +344,126 @@ def platelet(mask, min_area=20, max_area=500):
    return plat_mask
 
 
-def wbc(mask, min_area=800, max_area=None):
-    num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(mask)
+def wbc(preprocessed_img, min_area=800, max_area=None):
+   _, purple_mask = segmenting_purple_cells(preprocessed_img)
+   num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(purple_mask)
 
-    wbc_mask = np.zeros_like(mask)
+   wbc_mask = np.zeros_like(purple_mask)
 
    # Index 0 is background label (not needed), so we start at index 1
-    for i in range(1, num_labels):
-        area = stats[i, cv2.CC_STAT_AREA]
-        if area >= min_area and (max_area is None or area <= max_area):
-            wbc_mask[labels == i] = 255
+   for i in range(1, num_labels):
+      area = stats[i, cv2.CC_STAT_AREA]
+      if area >= min_area and (max_area is None or area <= max_area):
+         wbc_mask[labels == i] = 255
 
-    return wbc_mask
+   return wbc_mask
 
 
-# Tetsing Segmentation for Purple Cells (WBCs and Platelets)
-# ----------------------------------------------------------------
-#img = cv2.imread('../data/input/JPEGImages/BloodImage_00003.jpg')
-#img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-#preprocessed_img = preprocess_img(img)
-#img_purple, purple_mask = segmenting_purple_cells(preprocessed_img)
-#plat_mask = platelet(purple_mask)
-#wbc_mask = wbc(purple_mask)
-#show_images([img_rgb, preprocessed_img, img_purple, purple_mask, plat_mask, wbc_mask], ['Original Image', 'Preprocessed Image', 'Purple Cells Segmented', 'Purple Cells Mask', 'Platelet Mask', 'wbc mask'], [None, None, None, 'gray', 'gray', 'gray'])
+def label_WBC(img):
+   """
+   Segments WBCs, labels them, and draws bounding boxes.
+   WBCs are typically identified by their large purple nucleus.
+   """
+   preprocessed_img = preprocess_img(img, clahe_cliplimit=3, clahe_tileGridSize=(4, 4))
+
+   wbc_mask_binary = wbc(preprocessed_img)
+   wbc_labels = label(wbc_mask_binary)
+
+   img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB) 
+   resulted_boxes = img_rgb.copy()
+
+   cells = regionprops(wbc_labels)
+   for cell in cells:
+      y0, x0, y1, x1 = cell.bbox
+      cv2.rectangle(resulted_boxes, (x0, y0), (x1, y1), (0, 0, 255), 2)
+      text_pos = (x0, max(y0 - 5, 0))
+      cv2.putText(resulted_boxes, "WBC", text_pos, cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2, cv2.LINE_AA)
+   return resulted_boxes, wbc_labels
+
+def label_Platelets(img):
+   """
+   Segments Platelets, labels them, and draws bounding boxes.
+   Platelets are small purple spots.
+   """
+   preprocessed_img = preprocess_img(img, clahe_cliplimit=3, clahe_tileGridSize=(4, 4))
+
+   platelet_mask_binary = platelet(preprocessed_img)
+
+   platelet_labels = label(platelet_mask_binary)
+
+   img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+   resulted_boxes = img_rgb.copy()
+
+   cells = regionprops(platelet_labels)
+
+   for cell in cells:
+      y0, x0, y1, x1 = cell.bbox
+
+      cv2.rectangle(resulted_boxes, (x0, y0), (x1, y1), (255, 0,0), 1)
+      text_pos = (x0, max(y0 - 5, 0))
+      cv2.putText(resulted_boxes, "Platelet", text_pos, cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 0,0), 1, cv2.LINE_AA)
+   return resulted_boxes, platelet_labels
+
+def label_all_cells(img):
+   """
+   labels all cells, and draws bounding boxes.
+   """
+   _, rbc_labels = label_RBC(img)
+
+   preprocessed_img = preprocess_img(img, clahe_cliplimit=3, clahe_tileGridSize=(4, 4))
+   wbc_mask_binary = wbc(preprocessed_img)
+   platelet_mask_binary = platelet(preprocessed_img)
+
+   wbc_labels = label(wbc_mask_binary)
+   platelet_labels = label(platelet_mask_binary)
+
+   img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+   final_result = img_rgb.copy()
+
+   # --- Draw RBCs (Green) ---
+   for cell in regionprops(rbc_labels):
+      y0, x0, y1, x1 = cell.bbox
+      cv2.rectangle(final_result, (x0, y0), (x1, y1), (0, 255, 0), 1)
+      cv2.putText(final_result, "RBC", (x0, max(y0 - 5, 0)), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 0), 1)
+
+   # --- Draw WBCs (Blue) ---
+   for cell in regionprops(wbc_labels):
+      y0, x0, y1, x1 = cell.bbox
+      cv2.rectangle(final_result, (x0, y0), (x1, y1), (0, 0, 255), 2)
+      cv2.putText(final_result, "WBC", (x0, max(y0 - 5, 0)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+
+   # --- Draw Platelets (Red) ---
+   for cell in regionprops(platelet_labels):
+      y0, x0, y1, x1 = cell.bbox
+      cv2.rectangle(final_result, (x0, y0), (x1, y1), (255, 0, 0), 1)
+      cv2.putText(final_result, "Platelet", (x0, max(y0 - 5, 0)), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 0, 0), 1)
+
+   return final_result
+
+
+
+
+img = cv2.imread('../data/input/JPEGImages/BloodImage_00003.jpg')
+img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+preprocessed_img = preprocess_img(img)
+plat_mask = platelet(preprocessed_img)
+wbc_mask = wbc(preprocessed_img)
+show_images([img_rgb, preprocessed_img, plat_mask, wbc_mask], ['Original Image', 'Preprocessed Image', 'Platelet Mask', 'wbc mask'], [None, None, 'gray', 'gray'])
 
 # img = cv2.imread('../data/input/JPEGImages/BloodImage_00014.jpg')
 # resulted_boxes, RBCs_labels = segment_label_RBC(img)
 # show_images([resulted_boxes], ['resulted_boxes'], [None])
 
-# this part is for test till the work is done i put it here if you want to see how it is working, the flow i mean, delete it if you want
-# img = cv2.imread('../data/input/JPEGImages/BloodImage_00003.jpg')
-# img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-# preprocessed_img = preprocess_img(img)
-# thresholding_RBC_mask = thresholding_RBC(preprocessed_img)
-# show_images([img_rgb, preprocessed_img, thresholding_RBC_mask], ['Original Image', 'Preprocessed Image', 'thresholding_RBC_mask'], [None, None, 'gray'])
+img = cv2.imread('../data/input/JPEGImages/BloodImage_00003.jpg')
+#wbc_result_img, wbc_labels = label_WBC(img)
+#platelet_result_img, platelet_labels = label_Platelets(img)
+all_cells_result_img = label_all_cells(img)
+show_images([all_cells_result_img], ['All Cells Detection'])
 
+img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+preprocessed_img = preprocess_img(img)
+_, purple_mask = segmenting_purple_cells(preprocessed_img)
+wbc_binary = wbc(purple_mask)
+platelet_binary = platelet(purple_mask)
+
+show_images([purple_mask, wbc_binary, platelet_binary], ['Purple Mask (All)', 'WBC Binary Mask', 'Platelet Binary Mask'])

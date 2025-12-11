@@ -374,6 +374,9 @@ def wbc(mask, min_area=800, max_area=None):
 #wbc_mask = wbc(purple_mask)
 #show_images([img_rgb, preprocessed_img, img_purple, purple_mask, plat_mask, wbc_mask], ['Original Image', 'Preprocessed Image', 'Purple Cells Segmented', 'Purple Cells Mask', 'Platelet Mask', 'wbc mask'], [None, None, None, 'gray', 'gray', 'gray'])
 
+# img = cv2.imread('../data/input/JPEGImages/BloodImage_00014.jpg')
+# resulted_boxes, RBCs_labels = segment_label_RBC(img)
+# show_images([resulted_boxes], ['resulted_boxes'], [None])
 
 # this part is for test till the work is done i put it here if you want to see how it is working, the flow i mean, delete it if you want
 # img = cv2.imread('../data/input/JPEGImages/BloodImage_00003.jpg')

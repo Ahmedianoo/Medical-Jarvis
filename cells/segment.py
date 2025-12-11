@@ -298,11 +298,11 @@ def label_RBC(img):
    """
       getting the resulted boxes for the most updated cells and drawing green rectangle with text "RBC" above this rectangle
    """
-   # for cell in cells:
-   #    y0, x0, y1, x1 = cell.bbox
-   #    cv2.rectangle(resulted_boxes, (x0, y0), (x1, y1), (0, 255, 255), 1)
-   #    text_pos = (x0, max(y0 - 5, 0))
-   #    cv2.putText(resulted_boxes, "RBC", text_pos, cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 255), 1, cv2.LINE_AA)
+   for cell in cells:
+      y0, x0, y1, x1 = cell.bbox
+      cv2.rectangle(resulted_boxes, (x0, y0), (x1, y1), (0, 255, 255), 1)
+      text_pos = (x0, max(y0 - 5, 0))
+      cv2.putText(resulted_boxes, "RBC", text_pos, cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 255), 1, cv2.LINE_AA)
 
    return resulted_boxes, RBCs_labels
 

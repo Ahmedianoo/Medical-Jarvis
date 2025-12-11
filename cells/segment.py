@@ -126,7 +126,8 @@ def thresholding_RBC(preprocessed_img, lower_red1=np.array([0, 10, 45]), upper_r
 
 
 def segment_RBC(img):
-    """
+    
+   """
       this function takes the img, and return the result which is the image with the RBCs surrounded with redlines, and the watershed result
       it basically starts with preprocessing and the thresholding with hue to extract RBCc
       and then it performs the distance transform then applying watershed

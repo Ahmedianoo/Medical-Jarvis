@@ -44,9 +44,6 @@ def initialize_camera(index=0):
 
 
 def get_frame(cap):
-
-
-
     """
         this capture a single image from camera
         ret - boolen tells if it is catpured correctly or not

@@ -69,7 +69,7 @@ def extract_features(contour):
             c_len = np.linalg.norm(np.array(end) - np.array(far))
             angle = np.arccos((b**2 + c_len**2 - a**2) / (2 * b * c_len)) * 180 / np.pi
 
-            if angle < 90 and depth > 20:
+            if angle < 90 and depth > 80:
                 finger_count += 1
         # if finger_count > 0:
         #     finger_count += 1  # approximate thumb
@@ -80,7 +80,7 @@ def extract_features(contour):
     circularity = 4 * np.pi * area / (perimeter * perimeter + 1e-5)
     aspect_ratio = w / h
 
-    features = {'centroid': (cx, cy), 'hull': hull, 'defects': defects, 'convexity defect': finger_count, 'bounding_box': (x, y, w, h), 'aspect_ratio': aspect_ratio
+    features = {'centroid': (cx, cy), 'hull': hull, 'defects': defects, 'convexity_defect': finger_count, 'bounding_box': (x, y, w, h), 'aspect_ratio': aspect_ratio
                 , 'area': area, 'circularity': circularity }
 
     return features

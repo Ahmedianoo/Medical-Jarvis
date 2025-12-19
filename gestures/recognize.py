@@ -25,3 +25,15 @@ Notes:
     - This module does NOT interact with the UI or filesystem.
     - It strictly converts features into a semantic gesture label.
 """
+import cv2
+import numpy as np
+
+def is_hand(features, min_area=30000, max_area=90000, min_circularity=0.08, max_circularity=0.75):
+    """
+    Returns True if a valid hand is detected
+    """
+    circularity = features['circularity']
+    area = features['area']
+
+    return ( min_area < features['area'] < max_area  and min_circularity < features['circularity'] < max_circularity)
+

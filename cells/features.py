@@ -10,210 +10,159 @@ from preprocess import preprocess_img
 from skimage.filters import frangi
 import pandas as pd
 from segment import *
+
 def extract_filtered_rbc_features(img, labels, min_area=1500, max_area=10000, remove_borders=True):
     """
-    Extracts specific parameters and filters RBCs by size and position.
-
-    Args:
-        img: Original image (for intensity calculations)
-        labels: Labeled mask from the segmentation step
-        min_area: Minimum pixel area to be considered a valid single RBC (filters fragments)
-        max_area: Maximum pixel area (filters overlapping clumps)
-        remove_borders: If True, excludes cells touching the image edge (partial cells)
+    RBC SPECIFIC: Applies strict size and border filtering.
     """
     properties = regionprops(labels)
     rbc_data = []
-
-    # Get image dimensions to check for border contact
+    valid_ids = []
     img_h, img_w = img.shape[:2]
-
     for prop in properties:
-        
-        # --- 1. BORDER FILTERING ---
-        # If a cell touches the edge of the image, its area is incomplete.
-        # We check if the bounding box coordinates touch 0 or the image width/height.
+        # 1. Border Filtering
         if remove_borders:
             y0, x0, y1, x1 = prop.bbox
             if y0 == 0 or x0 == 0 or y1 == img_h or x1 == img_w:
                 continue
-
-        # --- 2. SIZE FILTERING ---
-        # Filter out:
-        # - Small fragments/noise (Area < min_area)
-        # - Large overlapping clumps/doublets (Area > max_area)
+        # 2. Size Filtering
         if prop.area < min_area or prop.area > max_area:
             continue
-
-        # --- 3. PARAMETER CALCULATION ---
-        # Circularity Index (Perfect circle = 1.0)
         circularity = (4 * np.pi * prop.area) / (prop.perimeter**2) if prop.perimeter > 0 else 0
-        
-        # Aspect Ratio (Elongation)
         aspect_ratio = prop.major_axis_length / prop.minor_axis_length if prop.minor_axis_length > 0 else 1
-        
-        # Mean Intensity
-        if len(img.shape) == 3:
-            gray_img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-            mean_intensity = np.mean(gray_img[labels == prop.label])
-        else:
-            mean_intensity = prop.mean_intensity
-
+        valid_ids.append(prop.label)
+        filtered_mask = np.where(np.isin(labels, valid_ids), labels, 0).astype(np.uint8)
         rbc_data.append({
             "label_id": prop.label,
             "Area": prop.area,
-            "Circularity": round(circularity, 3),
-            "Aspect Ratio": round(aspect_ratio, 3),
-            "Mean Intensity": round(mean_intensity, 2)
+            "Circularity": circularity,
+            "Aspect Ratio": aspect_ratio
         })
+    return pd.DataFrame(rbc_data),filtered_mask
 
-    return pd.DataFrame(rbc_data)
+def extract_platelet_features(img, labels):
+    properties = regionprops(labels)
+    plat_data = []
+    valid_ids = []
+    for prop in properties:
+        circularity = (4 * np.pi * prop.area) / (prop.perimeter**2) if prop.perimeter > 0 else 0
+        aspect_ratio = prop.major_axis_length / prop.minor_axis_length if prop.minor_axis_length > 0 else 1
+        valid_ids.append(prop.label)
+        filtered_mask = np.where(np.isin(labels, valid_ids), labels, 0).astype(np.uint8)
+        plat_data.append({
+            "Label ID": prop.label,
+            "Area": prop.area,
+            "Circularity": circularity,
+            "Aspect Ratio": aspect_ratio
+        })
+    return pd.DataFrame(plat_data),filtered_mask
 
 def visualize_filtered_rbcs(img, original_labels, filtered_df):
-    """
-    Draws bounding boxes ONLY around the RBCs that passed the filtering criteria
-    present in the filtered_df.
-    """
-    # Create a copy of the image to draw on
     viz_img = img.copy()
-
-    # If dataframe is empty, return the plain image
     if filtered_df.empty:
-        print("No valid cells to visualize.")
         return viz_img
-
-    # Get a set of the valid label IDs for fast lookup
     valid_ids = set(filtered_df['label_id'].values)
-
-    # Iterate through ALL regions found in the initial segmentation
     for prop in regionprops(original_labels):
-        # check if this specific cell's ID exists in our filtered list
         if prop.label in valid_ids:
             y0, x0, y1, x1 = prop.bbox
-            
-            # Draw a distinct green box for valid, counted RBCs
             cv2.rectangle(viz_img, (x0, y0), (x1, y1), (0, 255, 0), 2)
-            
-            # Optional: put the area size above it to verify visually
-            text = f"RBC {prop.area}"
-            cv2.putText(viz_img, text, (x0, max(y0 - 5, 0)), 
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-            
+            cv2.putText(viz_img, "RBC", (x0, max(y0 - 5, 0)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
     return viz_img
 
-def compute_diagnostic_parameters(df_rbc, img_shape, wbc_count=0, platelet_count=0):
-    """
-    Computes the summary diagnostic parameters as defined in the provided document table.
+def visualize_filtered_platelets(img, original_labels, filtered_df):
+    viz_img = img.copy()
+    if filtered_df.empty:
+        return viz_img
+    valid_ids = set(filtered_df['Label ID'].values)
+    for prop in regionprops(original_labels):
+        if prop.label in valid_ids:
+            y0, x0, y1, x1 = prop.bbox
+            cv2.rectangle(viz_img, (x0, y0), (x1, y1), (255, 0, 0), 2)
+            cv2.putText(viz_img, "Platelet", (x0, max(y0 - 5, 0)), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 0, 0), 1)
+    return viz_img
 
-    Args:
-        df_rbc (pd.DataFrame): The dataframe containing valid RBC features.
-        img_shape (tuple): The shape of the original image (height, width, channels).
-        wbc_count (int): Total count of WBCs (from label_WBC).
-        platelet_count (int): Total count of Platelets (from label_Platelets).
-        
-    Returns:
-        dict: A dictionary of the calculated parameters.
+def compute_rbc_parameters(df, img_shape):
+    """
+    Calculates and PRINTS the table specifically for RBCs.
     """
     img_h, img_w = img_shape[:2]
-    total_img_area = img_h * img_w
-
-    # 1. Cell Counts
-    rbc_count = len(df_rbc)
-
-    # 2. Average Cell Size (Mean area of RBCs)
-    # We use the 'Area' column from our extracted features
-    avg_size = df_rbc['Area'].mean() if not df_rbc.empty else 0
-
-    # 3. Circularity Index
-    # (Global average of the RBC circularity)
-    avg_circularity = df_rbc['Circularity'].mean() if not df_rbc.empty else 0
-
-    # 4. Aspect Ratio
-    # (Global average of elongation)
-    avg_aspect_ratio = df_rbc['Aspect Ratio'].mean() if not df_rbc.empty else 0
-
-    # 5. Cell Density (Distribution of cells per unit area)
-    # Calculated as: Total RBCs / Total Image Pixels (Scaled to cells per 10k pixels for readability)
-    cell_density = (rbc_count / total_img_area) * 10000
-
-    # 6. Overlap Ratio / Confluency
-    # Definition: The degree to which cells cover the slide. 
-    # Calculated as: (Sum of all Cell Areas) / Total Image Area
-    # This represents the % of the image covered by cells (Crowding Factor).
-    total_cell_area = df_rbc['Area'].sum() if not df_rbc.empty else 0
-    overlap_ratio = (total_cell_area / total_img_area) * 100
-
-    return {
-        "RBC Count": rbc_count,
-        "WBC Count": wbc_count,
-        "Platelet Count": platelet_count,
-        "Avg Cell Size (px)": round(avg_size, 2),
-        "Circularity Index": round(avg_circularity, 3),
-        "Aspect Ratio": round(avg_aspect_ratio, 3),
-        "Cell Density": f"{round(cell_density, 2)} per 10k px",
-        "Overlap Ratio (Crowding)": f"{round(overlap_ratio, 2)} %"
-    }
-
-# 1. Load Image
-img_path = '../data/input/JPEGImages/BloodImage_00003.jpg'
-img = cv2.imread(img_path)
-
-if img is None:
-    print(f"Error: Could not read image at {img_path}")
-else:
-    # 2. Initial Segmentation (Gets everything, including clumps and border cells)
-    # rbc_labels_all contains every segmented object
-    initial_result_img, rbc_labels_all = label_RBC(img)
-    print(rbc_labels_all)
-    # 3. Filtering & Feature Extraction
-    # We apply strict filters here. Overlapping cells (large area) and border cells are dropped.
-    all_regions = regionprops(rbc_labels_all)
-    raw_count = len(all_regions)
-    print(f"Total Detected Objects (Raw): {raw_count}")
-    df_rbc_filtered = extract_filtered_rbc_features(
-        img, 
-        rbc_labels_all, 
-        remove_borders=True # Removes incomplete cells at edges
-    )
-
-    # 4. Visualize the Result
-    # This creates an image showing ONLY the cells that survived step 3
-    final_filtered_image = visualize_filtered_rbcs(img, rbc_labels_all, df_rbc_filtered)
-
-    # 5. Display Results
-    normal_rbc_count = len(df_rbc_filtered)
-    print(f"Total Counted (Filtered) RBCs: {normal_rbc_count}")
-
-    # Compare initial segmentation vs final filtered result
-    show_images(
-        [initial_result_img, final_filtered_image],
-        ['Initial Segmentation (All Objects)', f'Final Filtered RBCs (Count: {normal_rbc_count})']
-    )
-
-    _, wbc_labels = label_WBC(img)
-    wbc_count = len(np.unique(wbc_labels)) - 1 # Subtract background
-    # Platelets (Assume you have this function)
-    _, platelet_labels = label_Platelets(img)
-    platelet_count = len(np.unique(platelet_labels)) - 1
-
-    params = compute_diagnostic_parameters(
-        df_rbc_filtered, 
-        img.shape, 
-        wbc_count=wbc_count, 
-        platelet_count=platelet_count
-    )
-    # 5. Print the "Parameter Extraction" Table
+    total_area = img_h * img_w
+    count = len(df)
+    avg_size = df['Area'].mean() if not df.empty else 0
+    avg_circ = df['Circularity'].mean() if not df.empty else 0
+    avg_ar = df['Aspect Ratio'].mean() if not df.empty else 0
+    density = (count / total_area) * 10000
+    overlap = (df['Area'].sum() / total_area) * 100 if not df.empty else 0
     print("\n" + "="*50)
-    print("      3. PARAMETER EXTRACTION REPORT")
+    print("      RBC PARAMETER REPORT")
     print("="*50)
-    print(f"{'Parameter':<30} | {'Value':<15}")
+    print(f"{'Parameter':<25} | {'Value':<20}")
     print("-" * 50)
-    print(f"{'Cell Count (RBC)':<30} | {params['RBC Count']}")
-    print(f"{'Cell Count (WBC)':<30} | {params['WBC Count']}")
-    print(f"{'Cell Count (Platelets)':<30} | {params['Platelet Count']}")
-    print("-" * 50)
-    print(f"{'Average Cell Size':<30} | {params['Avg Cell Size (px)']}")
-    print(f"{'Circularity Index':<30} | {params['Circularity Index']}")
-    print(f"{'Aspect Ratio':<30} | {params['Aspect Ratio']}")
-    print(f"{'Cell Density':<30} | {params['Cell Density']}")
-    print(f"{'Overlap Ratio':<30} | {params['Overlap Ratio (Crowding)']}")
+    print(f"{'Cell Count':<25} | {count}")
+    print(f"{'Average Cell Size':<25} | {round(avg_size, 2)} px")
+    print(f"{'Circularity Index':<25} | {round(avg_circ, 3)}")
+    print(f"{'Aspect Ratio':<25} | {round(avg_ar, 3)}")
+    print(f"{'Cell Density':<25} | {round(density, 2)} / 10k px")
+    print(f"{'Overlap Ratio':<25} | {round(overlap, 2)} %")
     print("="*50 + "\n")
+
+def compute_platelet_parameters(df, img_shape):
+    """
+    Calculates and PRINTS the table specifically for Platelets.
+    """
+    img_h, img_w = img_shape[:2]
+    total_area = img_h * img_w
+    count = len(df)
+    avg_size = df['Area'].mean() if not df.empty else 0
+    avg_circ = df['Circularity'].mean() if not df.empty else 0
+    avg_ar = df['Aspect Ratio'].mean() if not df.empty else 0
+    density = (count / total_area) * 10000
+    overlap = (df['Area'].sum() / total_area) * 100 if not df.empty else 0
+    print("\n" + "="*50)
+    print("      PLATELET PARAMETER REPORT")
+    print("="*50)
+    print(f"{'Parameter':<25} | {'Value':<20}")
+    print("-" * 50)
+    print(f"{'Cell Count':<25} | {count}")
+    print(f"{'Average Cell Size':<25} | {round(avg_size, 2)} px")
+    print(f"{'Circularity Index':<25} | {round(avg_circ, 3)}")
+    print(f"{'Aspect Ratio':<25} | {round(avg_ar, 3)}")
+    print(f"{'Cell Density':<25} | {round(density, 2)} / 10k px")
+    print(f"{'Overlap Ratio':<25} | {round(overlap, 2)} %")
+    print("="*50 + "\n")
+
+
+img = cv2.imread('../data/input/JPEGImages/BloodImage_00003.jpg')
+_, rbc_labels_all = label_RBC(img)
+raw_rbc=regionprops(rbc_labels_all)
+raw_rbc_count=len(raw_rbc)
+print(f"{'Red Blood Cell Count':<25} | {raw_rbc_count}")
+df_rbc, rbc_filtered_mask = extract_filtered_rbc_features(
+    img, 
+    rbc_labels_all, 
+    min_area=1500, 
+    max_area=10000, 
+    remove_borders=True
+)
+
+_, platelet_labels_all = label_Platelets(img)
+df_platelets, platelet_filtered_mask = extract_platelet_features(img, platelet_labels_all)
+
+compute_rbc_parameters(df_rbc, img.shape)
+compute_platelet_parameters(df_platelets, img.shape)
+
+final_viz = np.zeros_like(img)
+final_viz[rbc_filtered_mask > 0] = [0, 255, 0]
+final_viz[platelet_filtered_mask > 0] = [255, 0, 0]
+overlay = cv2.addWeighted(img, 0.7, final_viz, 0.3, 0)
+show_images(
+    [rbc_filtered_mask, platelet_filtered_mask, overlay], 
+    ["RBC Mask (Filtered)", "Platelet Mask", "Combined Overlay"]
+)
+img_with_rbcs = visualize_filtered_rbcs(img, rbc_labels_all, df_rbc)
+final_combined_img = visualize_filtered_platelets(img_with_rbcs, platelet_labels_all, df_platelets)
+
+show_images(
+    [img, final_combined_img], 
+    ["Original Image", "Detected Cells (Green=RBC, Red=Platelet)"]
+)

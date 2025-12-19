@@ -80,7 +80,7 @@ def extract_features(contour):
     circularity = 4 * np.pi * area / (perimeter * perimeter + 1e-5)
     aspect_ratio = w / h
 
-    features = {'centroid': (cx, cy), 'hull': hull, 'defects': defects, 'finger_count': finger_count, 'bounding_box': (x, y, w, h), 'aspect_ratio': aspect_ratio
+    features = {'centroid': (cx, cy), 'hull': hull, 'defects': defects, 'convexity defect': finger_count, 'bounding_box': (x, y, w, h), 'aspect_ratio': aspect_ratio
                 , 'area': area, 'circularity': circularity }
 
     return features

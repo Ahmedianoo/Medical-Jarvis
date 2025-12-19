@@ -41,8 +41,8 @@ def detect_hand(frame):
     """
         Skin color range (should be reviewed)
     """
-    lower = np.array([0, 133, 77])
-    upper = np.array([255, 180, 135])
+    lower = np.array([0, 130, 70])
+    upper = np.array([255, 180, 145])
 
     """
         mask according to these thresholds

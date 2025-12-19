@@ -81,7 +81,7 @@ def visualize_filtered_platelets(img, original_labels, filtered_df):
             cv2.putText(viz_img, "Platelet", (x0, max(y0 - 5, 0)), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 0, 0), 1)
     return viz_img
 
-def compute_rbc_parameters(df, img_shape):
+def compute_rbc_parameters(df, img_shape,rbc_mask):
     """
     Calculates and PRINTS the table specifically for RBCs.
     """
@@ -92,7 +92,25 @@ def compute_rbc_parameters(df, img_shape):
     avg_circ = df['Circularity'].mean() if not df.empty else 0
     avg_ar = df['Aspect Ratio'].mean() if not df.empty else 0
     density = (count / total_area) * 10000
-    overlap = (df['Area'].sum() / total_area) * 100 if not df.empty else 0
+    # 1. Create a binary mask of all valid cells
+    binary_mask = (rbc_mask > 0).astype(np.uint8)
+    # 2. Close gaps: Watershed puts a 1px line between cells. We dilate to bridge them back 
+    kernel = np.ones((3,3), np.uint8)
+    merged_mask = cv2.dilate(binary_mask, kernel, iterations=1)
+    # 3. Find connected components (blobs) on this merged mask
+    num_blobs, blob_labels, stats, _ = cv2.connectedComponentsWithStats(merged_mask)
+    # 4. Identify clumps.
+    #    A blob is a "clump" if its area is significantly larger than the average single cell.
+    clump_threshold = avg_size * 1.5
+    clump_area_sum = 0
+    total_cell_area = df['Area'].sum()
+
+    for i in range(1, num_blobs):
+        blob_area = stats[i, cv2.CC_STAT_AREA]
+        if blob_area > clump_threshold:
+            clump_area_sum += blob_area
+    #    Result is 0% if all cells are separated, 100% if everything is one giant blob.
+    overlap_ratio = (clump_area_sum / total_cell_area) * 100 if total_cell_area > 0 else 0
     print("\n" + "="*50)
     print("      RBC PARAMETER REPORT")
     print("="*50)
@@ -103,7 +121,7 @@ def compute_rbc_parameters(df, img_shape):
     print(f"{'Circularity Index':<25} | {round(avg_circ, 3)}")
     print(f"{'Aspect Ratio':<25} | {round(avg_ar, 3)}")
     print(f"{'Cell Density':<25} | {round(density, 2)} / 10k px")
-    print(f"{'Overlap Ratio':<25} | {round(overlap, 2)} %")
+    print(f"{'Overlap Ratio':<25} | {round(overlap_ratio, 2)} %")
     print("="*50 + "\n")
 
 def compute_platelet_parameters(df, img_shape):
@@ -148,7 +166,7 @@ df_rbc, rbc_filtered_mask = extract_filtered_rbc_features(
 _, platelet_labels_all = label_Platelets(img)
 df_platelets, platelet_filtered_mask = extract_platelet_features(img, platelet_labels_all)
 
-compute_rbc_parameters(df_rbc, img.shape)
+compute_rbc_parameters(df_rbc, img.shape,rbc_filtered_mask)
 compute_platelet_parameters(df_platelets, img.shape)
 
 final_viz = np.zeros_like(img)

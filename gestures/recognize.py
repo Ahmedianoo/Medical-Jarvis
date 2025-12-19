@@ -28,12 +28,29 @@ Notes:
 import cv2
 import numpy as np
 
+
 def is_hand(features, min_area=30000, max_area=90000, min_circularity=0.08, max_circularity=0.75):
     """
-    Returns True if a valid hand is detected
+        returns True if a valid hand is detected
     """
     circularity = features['circularity']
     area = features['area']
 
     return ( min_area < features['area'] < max_area  and min_circularity < features['circularity'] < max_circularity)
+
+
+def get_static_gesture(features):
+    v_shapes = features['convexity_defect']
+    circularity = features['circularity']
+    area = features['area']
+    aspect_ratio = features['aspect_ratio']
+
+    if v_shapes == 0 and circularity > 0.15: #closed hand
+        return 'FIST'
+    if v_shapes >= 3 and area > 55000:      #open hand
+        return 'PALM'
+    if v_shapes == 1 and aspect_ratio > 0.4: #for cursor, victory sign
+        return 'POINT'
+    return 'UNKOWN'
+    
 

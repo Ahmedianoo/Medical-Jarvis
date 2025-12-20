@@ -7,6 +7,139 @@ from skimage.measure import regionprops, label
 from segment import label_RBC, label_Platelets, segmenting_purple_cells
 from preprocess import preprocess_img
 from features import extract_filtered_rbc_features
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+
+def generate_analysis_graphs(df, output_dir):
+    """
+    Generates statistical visualization graphs from the report dataframe.
+    """
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+        
+    # Set style
+    sns.set_style("whitegrid")
+    plt.rcParams.update({'font.size': 12})
+
+    # ==========================================
+    # 1. SCATTER PLOT: Predicted vs Actual Counts
+    # ==========================================
+    # Tells you: "Am I consistently over-counting or under-counting?"
+    fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+    
+    # RBC Scatter
+    axes[0].scatter(df['RBC_GT_Count'], df['RBC_Raw_Count'], alpha=0.5, label='Raw', color='red', s=20)
+    axes[0].scatter(df['RBC_GT_Count'], df['RBC_Filt_Count'], alpha=0.7, label='Filtered', color='blue', s=20)
+    # Ideal line
+    max_val = max(df['RBC_GT_Count'].max(), df['RBC_Raw_Count'].max())
+    axes[0].plot([0, max_val], [0, max_val], 'k--', lw=2, label='Perfect Count')
+    axes[0].set_title('RBC Counting Accuracy')
+    axes[0].set_xlabel('Ground Truth Count')
+    axes[0].set_ylabel('Predicted Count')
+    axes[0].legend()
+    
+    # Platelet Scatter
+    axes[1].scatter(df['Plat_GT_Count'], df['Plat_Raw_Count'], alpha=0.5, label='Raw', color='red', s=20)
+    axes[1].scatter(df['Plat_GT_Count'], df['Plat_Filt_Count'], alpha=0.7, label='Filtered', color='blue', s=20)
+    # Ideal line
+    max_val_p = max(df['Plat_GT_Count'].max(), df['Plat_Raw_Count'].max())
+    axes[1].plot([0, max_val_p], [0, max_val_p], 'k--', lw=2, label='Perfect Count')
+    axes[1].set_title('Platelet Counting Accuracy')
+    axes[1].set_xlabel('Ground Truth Count')
+    axes[1].set_ylabel('Predicted Count')
+    axes[1].legend()
+    
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, '1_count_scatter_plots.png'))
+    plt.close()
+
+    # ==========================================
+    # 2. HISTOGRAM: Improvement in Count Accuracy
+    # ==========================================
+    # Tells you: "How often do I get a perfect score?"
+    fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+    
+    sns.histplot(df['RBC_Raw_Count_Acc'], color='red', alpha=0.3, label='Raw', kde=True, ax=axes[0])
+    sns.histplot(df['RBC_Filt_Count_Acc'], color='blue', alpha=0.5, label='Filtered', kde=True, ax=axes[0])
+    axes[0].set_title('Distribution of RBC Count Accuracy')
+    axes[0].set_xlabel('Accuracy (1.0 = Perfect)')
+    axes[0].legend()
+
+    sns.histplot(df['Plat_Raw_Count_Acc'], color='red', alpha=0.3, label='Raw', kde=True, ax=axes[1])
+    sns.histplot(df['Plat_Filt_Count_Acc'], color='blue', alpha=0.5, label='Filtered', kde=True, ax=axes[1])
+    axes[1].set_title('Distribution of Platelet Count Accuracy')
+    axes[1].set_xlabel('Accuracy (1.0 = Perfect)')
+    axes[1].legend()
+
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, '2_count_accuracy_histograms.png'))
+    plt.close()
+
+    # ==========================================
+    # 3. HISTOGRAM: Spatial Accuracy (Jaccard/IoU)
+    # ==========================================
+    # Tells you: "How well do my boxes actually match the real cells?"
+    fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+    
+    sns.histplot(df['RBC_Raw_Spatial_Acc'], color='red', alpha=0.3, label='Raw', kde=True, ax=axes[0])
+    sns.histplot(df['RBC_Filt_Spatial_Acc'], color='blue', alpha=0.5, label='Filtered', kde=True, ax=axes[0])
+    axes[0].set_title('RBC Spatial Accuracy (IoU Based)')
+    axes[0].set_xlabel('Jaccard Index')
+    axes[0].legend()
+
+    sns.histplot(df['Plat_Raw_Spatial_Acc'], color='red', alpha=0.3, label='Raw', kde=True, ax=axes[1])
+    sns.histplot(df['Plat_Filt_Spatial_Acc'], color='blue', alpha=0.5, label='Filtered', kde=True, ax=axes[1])
+    axes[1].set_title('Platelet Spatial Accuracy (IoU Based)')
+    axes[1].set_xlabel('Jaccard Index')
+    axes[1].legend()
+
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, '3_spatial_accuracy_histograms.png'))
+    plt.close()
+
+    # ==========================================
+    # 4. BAR CHART: Overall Improvement Summary
+    # ==========================================
+    # Executive summary of the entire pipeline
+    metrics = ['Count Accuracy', 'Spatial Accuracy', 'Precision']
+    
+    # RBC Means
+    rbc_raw_means = [df['RBC_Raw_Count_Acc'].mean(), df['RBC_Raw_Spatial_Acc'].mean(), df['RBC_Raw_Prec'].mean()]
+    rbc_filt_means = [df['RBC_Filt_Count_Acc'].mean(), df['RBC_Filt_Spatial_Acc'].mean(), df['RBC_Filt_Prec'].mean()]
+    
+    # Platelet Means
+    plat_raw_means = [df['Plat_Raw_Count_Acc'].mean(), df['Plat_Raw_Spatial_Acc'].mean(), df['Plat_Raw_Prec'].mean()]
+    plat_filt_means = [df['Plat_Filt_Count_Acc'].mean(), df['Plat_Filt_Spatial_Acc'].mean(), df['Plat_Filt_Prec'].mean()]
+
+    fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+    
+    x = np.arange(len(metrics))
+    width = 0.35
+    
+    # RBC Bars
+    axes[0].bar(x - width/2, rbc_raw_means, width, label='Raw', color='salmon')
+    axes[0].bar(x + width/2, rbc_filt_means, width, label='Filtered', color='royalblue')
+    axes[0].set_xticks(x)
+    axes[0].set_xticklabels(metrics)
+    axes[0].set_title('RBC: Average Performance Metrics')
+    axes[0].set_ylim(0, 1.1)
+    axes[0].legend()
+    
+    # Platelet Bars
+    axes[1].bar(x - width/2, plat_raw_means, width, label='Raw', color='salmon')
+    axes[1].bar(x + width/2, plat_filt_means, width, label='Filtered', color='royalblue')
+    axes[1].set_xticks(x)
+    axes[1].set_xticklabels(metrics)
+    axes[1].set_title('Platelets: Average Performance Metrics')
+    axes[1].set_ylim(0, 1.1)
+    axes[1].legend()
+    
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, '4_overall_improvement_summary.png'))
+    plt.close()
+    
+    print(f"Analysis graphs saved to: {output_dir}")
 
 def parse_annotation(xml_path):
     if not os.path.exists(xml_path):
@@ -215,5 +348,6 @@ if os.path.exists(INPUT_DIR):
     print(f"Platelet Count Accuracy: {df['Plat_Raw_Count_Acc'].mean():.2%} -> {df['Plat_Filt_Count_Acc'].mean():.2%}")
     print(f"Platelet Spatial Acc:    {df['Plat_Raw_Spatial_Acc'].mean():.2%} -> {df['Plat_Filt_Spatial_Acc'].mean():.2%}")
     print(f"\nReport saved to 'final_evaluation_report.csv'")
+    generate_analysis_graphs(df, 'evaluation_graphs')
 else:
     print("Input folder not found.")

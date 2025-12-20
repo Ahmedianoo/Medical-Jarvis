@@ -44,18 +44,28 @@ def extract_platelet_features(img, labels):
     properties = regionprops(labels)
     plat_data = []
     valid_ids = []
+    
+    # 1. Initialize mask to zeros (Safe default)
+    filtered_mask = np.zeros_like(labels, dtype=np.uint8)
+
     for prop in properties:
         circularity = (4 * np.pi * prop.area) / (prop.perimeter**2) if prop.perimeter > 0 else 0
         aspect_ratio = prop.major_axis_length / prop.minor_axis_length if prop.minor_axis_length > 0 else 1
+        
         valid_ids.append(prop.label)
-        filtered_mask = np.where(np.isin(labels, valid_ids), labels, 0).astype(np.uint8)
+        
         plat_data.append({
             "Label ID": prop.label,
             "Area": prop.area,
             "Circularity": circularity,
             "Aspect Ratio": aspect_ratio
         })
-    return pd.DataFrame(plat_data),filtered_mask
+        
+    # 2. Create the mask ONCE at the end
+    if valid_ids:
+        filtered_mask = np.where(np.isin(labels, valid_ids), labels, 0).astype(np.uint8)
+        
+    return pd.DataFrame(plat_data), filtered_mask
 
 def visualize_filtered_rbcs(img, original_labels, filtered_df):
     viz_img = img.copy()
@@ -150,11 +160,12 @@ def compute_platelet_parameters(df, img_shape):
     print("="*50 + "\n")
 
 
-img = cv2.imread('../data/input/JPEGImages/BloodImage_00003.jpg')
+img = cv2.imread('../data/input/JPEGImages/BloodImage_00000.jpg')
 _, rbc_labels_all = label_RBC(img)
-raw_rbc=regionprops(rbc_labels_all)
-raw_rbc_count=len(raw_rbc)
+raw_rbc = regionprops(rbc_labels_all)
+raw_rbc_count = len(raw_rbc)
 print(f"{'Red Blood Cell Count':<25} | {raw_rbc_count}")
+
 df_rbc, rbc_filtered_mask = extract_filtered_rbc_features(
     img, 
     rbc_labels_all, 
@@ -163,20 +174,26 @@ df_rbc, rbc_filtered_mask = extract_filtered_rbc_features(
     remove_borders=True
 )
 
+# 2. Platelet Processing
 _, platelet_labels_all = label_Platelets(img)
 df_platelets, platelet_filtered_mask = extract_platelet_features(img, platelet_labels_all)
 
-compute_rbc_parameters(df_rbc, img.shape,rbc_filtered_mask)
+# 3. Reports
+compute_rbc_parameters(df_rbc, img.shape, rbc_filtered_mask)
 compute_platelet_parameters(df_platelets, img.shape)
 
+# 4. Pixel-based Visualization (Colored Masks)
 final_viz = np.zeros_like(img)
-final_viz[rbc_filtered_mask > 0] = [0, 255, 0]
-final_viz[platelet_filtered_mask > 0] = [255, 0, 0]
+final_viz[rbc_filtered_mask > 0] = [0, 255, 0]       # Green
+final_viz[platelet_filtered_mask > 0] = [255, 0, 0]  # Blue/Red (BGR vs RGB depending on lib)
 overlay = cv2.addWeighted(img, 0.7, final_viz, 0.3, 0)
+
 show_images(
     [rbc_filtered_mask, platelet_filtered_mask, overlay], 
     ["RBC Mask (Filtered)", "Platelet Mask", "Combined Overlay"]
 )
+
+# 5. Box-based Visualization
 img_with_rbcs = visualize_filtered_rbcs(img, rbc_labels_all, df_rbc)
 final_combined_img = visualize_filtered_platelets(img_with_rbcs, platelet_labels_all, df_platelets)
 

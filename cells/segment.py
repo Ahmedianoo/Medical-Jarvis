@@ -443,27 +443,19 @@ def label_all_cells(img):
 
 
 
-img = cv2.imread('../data/input/JPEGImages/BloodImage_00003.jpg')
-img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-preprocessed_img = preprocess_img(img)
-plat_mask = platelet(preprocessed_img)
-wbc_mask = wbc(preprocessed_img)
-show_images([img_rgb, preprocessed_img, plat_mask, wbc_mask], ['Original Image', 'Preprocessed Image', 'Platelet Mask', 'wbc mask'], [None, None, 'gray', 'gray'])
+# img = cv2.imread('../data/input/JPEGImages/BloodImage_00003.jpg')
+# img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+# preprocessed_img = preprocess_img(img)
+# plat_mask = platelet(preprocessed_img)
+# wbc_mask = wbc(preprocessed_img)
+# show_images([img_rgb, preprocessed_img, plat_mask, wbc_mask], ['Original Image', 'Preprocessed Image', 'Platelet Mask', 'wbc mask'], [None, None, 'gray', 'gray'])
 
 # img = cv2.imread('../data/input/JPEGImages/BloodImage_00014.jpg')
 # resulted_boxes, RBCs_labels = segment_label_RBC(img)
 # show_images([resulted_boxes], ['resulted_boxes'], [None])
 
-img = cv2.imread('../data/input/JPEGImages/BloodImage_00003.jpg')
-#wbc_result_img, wbc_labels = label_WBC(img)
-#platelet_result_img, platelet_labels = label_Platelets(img)
-all_cells_result_img = label_all_cells(img)
-show_images([all_cells_result_img], ['All Cells Detection'])
-
-img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-preprocessed_img = preprocess_img(img)
-_, purple_mask = segmenting_purple_cells(preprocessed_img)
-wbc_binary = wbc(purple_mask)
-platelet_binary = platelet(purple_mask)
-
-show_images([purple_mask, wbc_binary, platelet_binary], ['Purple Mask (All)', 'WBC Binary Mask', 'Platelet Binary Mask'])
+# img = cv2.imread('../data/input/JPEGImages/BloodImage_00003.jpg')
+# #wbc_result_img, wbc_labels = label_WBC(img)
+# #platelet_result_img, platelet_labels = label_Platelets(img)
+# all_cells_result_img = label_all_cells(img)
+# show_images([all_cells_result_img], ['All Cells Detection'])

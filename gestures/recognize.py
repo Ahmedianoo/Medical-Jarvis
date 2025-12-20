@@ -29,7 +29,7 @@ import cv2
 import numpy as np
 
 
-def is_hand(features, min_area=40000, max_area=90000, min_circularity=0.08, max_circularity=0.75):
+def is_hand(features, min_area=40000, max_area=100000, min_circularity=0.08, max_circularity=0.75):
     """
         returns True if a valid hand is detected
         the hand should be close enough to the laptop camera, but also not so close so that it takes the whole frame
@@ -49,13 +49,15 @@ def get_static_gesture(features):
     area = features['area']
     aspect_ratio = features['aspect_ratio']
 
-    if v_shapes == 0 and circularity > 0.25 and aspect_ratio > 0.6: #closed hand
+    if v_shapes == 0 and aspect_ratio > 0.6:  # closed hand  and circularity > 0.20
         return 'FIST'
-    if v_shapes >= 3 and area > 45000:      #open hand
+    if v_shapes >= 3 and area > 45000 :       # open hand and aspect_ratio < 1.0
         return 'PALM'
-    if v_shapes == 1 and 0.4 < aspect_ratio < 0.7: #for cursor, victory sign
+    if v_shapes == 1 and 0.4 < aspect_ratio < 0.7: # for cursor, victory sign
         return 'POINT'
-    return 'UNKOWN'
+    # if  v_shapes == 0 and aspect_ratio > 0.75 and circularity < 0.25: 
+    #     return 'PROCESS'
+    return 'UNKNOWN'
     
 
 def detect_motion(x1, y1, x2, y2, start, end, min_distance=100, dominant_axis_ration = 1.4):
@@ -71,8 +73,8 @@ def detect_motion(x1, y1, x2, y2, start, end, min_distance=100, dominant_axis_ra
 
         the caling of this function with the right parameters is the responsibilty of the top level   
     """
-    dx = x1 - x2
-    dy = y1 - y2
+    dx = x2 - x1
+    dy = y2 - y1
     distance = np.sqrt(dx ** 2 + dy ** 2)
 
     motion = "UNKNOWN_MOTION"

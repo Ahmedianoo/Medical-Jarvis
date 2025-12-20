@@ -29,7 +29,7 @@ import cv2
 import numpy as np
 
 
-def is_hand(features, min_area=45000, max_area=90000, min_circularity=0.08, max_circularity=0.75):
+def is_hand(features, min_area=40000, max_area=90000, min_circularity=0.08, max_circularity=0.75):
     """
         returns True if a valid hand is detected
         the hand should be close enough to the laptop camera, but also not so close so that it takes the whole frame
@@ -49,18 +49,18 @@ def get_static_gesture(features):
     area = features['area']
     aspect_ratio = features['aspect_ratio']
 
-    if v_shapes == 0 and circularity > 0.3 and aspect_ratio > 0.6: #closed hand
+    if v_shapes == 0 and circularity > 0.25 and aspect_ratio > 0.6: #closed hand
         return 'FIST'
-    if v_shapes >= 3 and area > 55000:      #open hand
+    if v_shapes >= 3 and area > 45000:      #open hand
         return 'PALM'
     if v_shapes == 1 and 0.4 < aspect_ratio < 0.7: #for cursor, victory sign
         return 'POINT'
     return 'UNKOWN'
     
 
-def detect_motion(x1, y1, x2, y2, start, end, min_distance=400, dominant_axis_ration = 2):
+def detect_motion(x1, y1, x2, y2, start, end, min_distance=100, dominant_axis_ration = 1.4):
     """
-        this function will take an initial and final centroid, this delay of frames will be handled by the top level
+        this function will take an initial and final centroid, this delay of frames will be handled by the top level - 20 frames are good
         also it will get the static hand gesture at the beginning and end of the motion, this also should be handled by the end of level
         and the distance threshold to consider it as motion
 

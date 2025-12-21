@@ -89,6 +89,10 @@ def apply_CLAHE(img, cliplimit=2.0, tileGridSize=(8,8)):
 Global HE enhances contrast of the whole image
 Uneven illumination in blood smears → edges of small/overlapping cells may still be lost
 CLAHE = local contrast → edges preserved, platelets remain visible
+Low clip limit = good enhancement, but if too week cell edges are lost
+High clip limit = agressive enhancement
+
+
 
 LAB L channel = better for adaptive contrast / uneven illumination.
 L lightness, A green-red, B blue-yellow

@@ -48,7 +48,7 @@ import numpy as np
 from skimage import exposure
 from matplotlib import pyplot as plt
 import os
-from utils.helpers import show_images
+from cells.utils.helpers import show_images
 
 def convert_bgr2rgb(img): # the default reading format in cv2 is BGR so we need to convert it to RGB
     return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)

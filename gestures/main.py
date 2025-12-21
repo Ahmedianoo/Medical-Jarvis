@@ -86,8 +86,24 @@ while True:
         with open(GESTURE_FILE, "w") as f:
             f.write(combined_output)
         last_written = combined_output
+        print(f"✓ WROTE TO FILE: {combined_output}")  # Debug output
+        print(f"  File location: {GESTURE_FILE}")  # Show file path
 
-    # show frames
+    # ===============================
+    # CROP AND RESIZE FRAME (NEW)
+    # ===============================
+    height, width = frame.shape[:2]
+    
+    # Crop center area (square focused on hand)
+    crop_size = min(height, width)
+    start_x = (width - crop_size) // 2
+    start_y = (height - crop_size) // 2
+    cropped_frame = frame[start_y:start_y+crop_size, start_x:start_x+crop_size]
+    
+    # Resize to small window
+    display_frame = cv2.resize(cropped_frame, (WINDOW_WIDTH, WINDOW_HEIGHT))
+
+    # Show frames
     cv2.imshow("Hand Detection", frame)
     cv2.imshow("Skin Mask", mask)
 

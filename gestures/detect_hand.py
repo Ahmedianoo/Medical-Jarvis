@@ -41,8 +41,8 @@ def detect_hand(frame):
     """
         Skin color range (should be reviewed)
     """
-    lower = np.array([0, 130, 70])
-    upper = np.array([255, 180, 145])
+    lower = np.array([0, 133, 77])
+    upper = np.array([255, 173, 127])
 
     """
         mask according to these thresholds
@@ -67,7 +67,7 @@ def detect_hand(frame):
         Number of times erosion is applied. Higher → more shrinking
     """
     mask = cv2.erode(mask, None, iterations=2)
-    mask = cv2.dilate(mask, None, iterations=2)
+    mask = cv2.dilate(mask, None, iterations=4)
 
 
     """

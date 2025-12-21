@@ -4,8 +4,8 @@ import numpy as np
 from typing import List, Dict, Optional
 
 from pprint import pprint
-from preprocess import preprocess_img
-from segment import wbc
+from cells.preprocess import preprocess_img
+from cells.segment import wbc
 
 class WBCClassifier:
     """    

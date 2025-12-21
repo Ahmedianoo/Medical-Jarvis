@@ -63,9 +63,9 @@ from skimage import exposure
 from matplotlib import pyplot as plt
 from scipy import ndimage
 import os
-from utils.helpers import show_images
+from cells.utils.helpers import show_images
 from skimage.measure import regionprops, label
-from preprocess import preprocess_img
+from cells.preprocess import preprocess_img
 from skimage.filters import frangi
 import pandas as pd
 

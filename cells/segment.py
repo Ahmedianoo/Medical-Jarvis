@@ -443,7 +443,7 @@ def label_all_cells(img):
 
 
 
-# img = cv2.imread('../data/input/JPEGImages/BloodImage_00003.jpg')
+# img = cv2.imread('../data/input/JPEGImages/BloodImage_00313.jpg')
 # img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 # preprocessed_img = preprocess_img(img)
 # plat_mask = platelet(preprocessed_img)

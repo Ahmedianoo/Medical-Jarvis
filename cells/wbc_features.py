@@ -240,7 +240,7 @@ classifier = WBCClassifier()
 # To be compared with 
 # https://www.kaggle.com/code/mohamedkamal77/cnn-train-0-99-val-0-98-test-0-986
 
-# img = cv2.imread("../data/input/JPEGImages/BloodImage_00015.jpg")
+# img = cv2.imread("../data/input/JPEGImages/BloodImage_00313.jpg")
 # pre = preprocess_img(img)
 # wbc_mask = wbc(pre)
 # res = classifier.classify_all_wbcs(pre, wbc_mask)

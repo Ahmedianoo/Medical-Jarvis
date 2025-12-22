@@ -10,7 +10,9 @@ CHART_OPTIONS = ["Statistics", "Area", "Circularity", "Aspect Ratio", "Correlati
 
 
 def toggle_camera():
-    """Toggle camera script on/off"""
+    """
+    Toggle camera script on/off
+    """
     if st.session_state.camera_active:
         # Close camera
         if st.session_state.camera_process is not None:
@@ -35,6 +37,9 @@ def toggle_camera():
 
 
 def read_gesture_state():
+    """
+    Map Gesture To Action
+    """
     isTabChanged = False
     gesture_file = os.path.join(PROJECT_ROOT, "gestures", "gesture_command.txt")
 

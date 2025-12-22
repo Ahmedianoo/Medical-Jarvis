@@ -71,8 +71,8 @@ def extract_features(contour):
 
             if angle < 90 and depth > 80:
                 finger_count += 1
-        # if finger_count > 0:
-        #     finger_count += 1  # approximate thumb
+        if finger_count > 0:
+            finger_count += 1  # approximate thumb
 
     x, y, w, h = cv2.boundingRect(contour)
     area = cv2.contourArea(contour)
@@ -81,7 +81,7 @@ def extract_features(contour):
     aspect_ratio = w / h
 
     features = {'centroid': (cx, cy), 'hull': hull, 'defects': defects, 'convexity_defect': finger_count, 'bounding_box': (x, y, w, h), 'aspect_ratio': aspect_ratio
-                , 'area': area, 'circularity': circularity }
+                , 'area': area, 'circularity': circularity, 'finger count': finger_count }
 
     return features
 

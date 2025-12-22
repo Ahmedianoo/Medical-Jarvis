@@ -27,8 +27,6 @@ from cells.wbc_features import WBCClassifier
 from cells.preprocess import preprocess_img
 from cells.features import extract_platelet_features
 
-from tabs.Home import Home
-
 
 
 def Platelets():

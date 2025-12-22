@@ -6,9 +6,9 @@ import os
 from typing import List, Dict, Optional
 from pprint import pprint
 
-from wbc_features import WBCClassifier
-from preprocess import preprocess_img
-from segment import wbc
+from cells.wbc_features import WBCClassifier
+from cells.preprocess import preprocess_img
+from cells.segment import wbc
 
 
 
@@ -20,9 +20,14 @@ class KNNWBCClassifier(WBCClassifier):
     def __init__(self, knn_path="knn_wbc.pkl", scaler_path="scaler_wbc.pkl"):
         super().__init__()
 
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+
+        knn_path = os.path.join(base_dir, knn_path)
+        scaler_path = os.path.join(base_dir, scaler_path)
+
         self.knn = joblib.load(knn_path)
         self.scaler = joblib.load(scaler_path)
-
+        
         self.feature_order = [
             "area",
             "circularity",

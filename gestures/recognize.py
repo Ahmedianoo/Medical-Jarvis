@@ -29,6 +29,7 @@ import cv2
 import numpy as np
 
 
+
 def is_hand(features, min_area=40000, max_area=100000, min_circularity=0.08, max_circularity=0.75):
     """
         returns True if a valid hand is detected
@@ -101,5 +102,3 @@ def detect_motion(x1, y1, x2, y2, start, end, min_distance=100, dominant_axis_ra
 
 
     return motion, direction   
-
-

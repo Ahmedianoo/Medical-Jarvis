@@ -38,6 +38,7 @@ while True:
         cv2.putText(frame, f"Area: {int(features['area'])}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
         cv2.putText(frame, f"Circularity: {features['circularity']:.2f}", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
         cv2.putText(frame, f"Aspect Ratio: {features['aspect_ratio']:.2f}", (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+        cv2.putText(frame, f"finger count: {features['finger count']:.2f}", (10, 300), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
 
         # draw contour
         cv2.drawContours(frame, [contour], -1, (255, 0, 0), 2)
@@ -104,6 +105,8 @@ while True:
     display_frame = cv2.resize(cropped_frame, (WINDOW_WIDTH, WINDOW_HEIGHT))
 
     # Show frames
+    cv2.imshow(WINDOW_NAME, display_frame)
+    #cv2.imshow("Skin Mask", mask)
     cv2.imshow("Hand Detection", frame)
     cv2.imshow("Skin Mask", mask)
 

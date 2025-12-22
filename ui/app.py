@@ -52,7 +52,6 @@ def get_base64_font(font_path):
     return base64.b64encode(data).decode()
 
 
-# Replace 'your_font_file.ttf' with your actual filename
 font_path = r"C:\Users\Dell\Desktop\Coding\jarvis-optimizers\ui\fonts\Aquire-BW0ox.otf"
 font_base64 = get_base64_font(font_path)
 
@@ -168,8 +167,6 @@ with col_button:
         # 1. Configuration based on state
         icon = ":material/videocam_off:" if is_active else ":material/videocam:"
 
-        # Set the colors for the background
-        # Green background when active, Deep Blue (or your primary) when closed
         bg_color = "#28a745" if is_active else "#FF4B4B"
         text_color = "white"
 
@@ -215,14 +212,15 @@ with col_button:
                 st.rerun()
 
 
-# --- 5. Navigation UI ---
 # Read gestures BEFORE rendering the segmented control
 @st.fragment(run_every=1.0)
 def background_gesture_listener():
     if st.session_state.camera_active:
-        read_gesture_state() 
+        if read_gesture_state():
+            st.rerun()
 
 
+background_gesture_listener()
 
 selected_tab = st.segmented_control(
     "Navigation",
@@ -236,7 +234,6 @@ if selected_tab and selected_tab != st.session_state.active_tab:
     st.session_state.active_tab = selected_tab
     st.rerun()
 
-background_gesture_listener()
 
 st.divider()
 
@@ -261,7 +258,3 @@ elif st.session_state.active_tab == "Platelets":
     Platelets()
 
 # =========================================================
-
-# if st.session_state.camera_active:
-#     time.sleep(0.5)  # Adjust timing as needed
-#     st.rerun()

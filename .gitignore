@@ -84,3 +84,6 @@ temp/
 # results/
 # output/
 # processed/
+
+gestures/Hands/
+gestures/test_results/

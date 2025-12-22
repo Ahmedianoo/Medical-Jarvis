@@ -10,7 +10,7 @@ from datetime import datetime
 
 from preprocess import preprocess_img
 from segment import wbc
-from wbc_features import WBCClassifier
+from knn_classifier import KNNWBCClassifier
 
 
 class Logger:
@@ -41,7 +41,7 @@ class WBCEvaluator:
     def __init__(self, labels_csv_path: str, images_dir: str):
         self.labels_df = pd.read_csv(labels_csv_path)
         self.images_dir = Path(images_dir)
-        self.classifier = WBCClassifier()
+        self.classifier = KNNWBCClassifier()
         
         self.labels_df.columns = self.labels_df.columns.str.strip()
         
@@ -355,7 +355,7 @@ class WBCEvaluator:
         
         print("\n" + "="*80)
     
-    def export_detailed_metrics(self, save_path="../results/wbc_features/evaluation_results/detailed_metrics.csv"):
+    def export_detailed_metrics(self, save_path="../results/wbc_features/evaluation_results_knn/detailed_metrics.csv"):
         """
         Export detailed per-class metrics to CSV.
         
@@ -470,7 +470,7 @@ class WBCEvaluator:
                 misclassified_as = df[df['predicted'] != cell_type]['predicted'].value_counts()
                 print(f"  Often misclassified as: {dict(misclassified_as)}")
     
-    def plot_confusion_matrix(self, save_path="../results/wbc_features/evaluation_results/confusion_matrix.png"):
+    def plot_confusion_matrix(self, save_path="../results/wbc_features/evaluation_results_knn/confusion_matrix.png"):
         """Generate and save a confusion matrix visualization."""
         if not self.confusion_data:
             print("No confusion matrix data available.")
@@ -519,7 +519,7 @@ class WBCEvaluator:
         print(f"\nConfusion matrix saved to {save_path}")
         plt.close()
     
-    def plot_feature_distributions(self, save_path="../results/wbc_features/evaluation_results/feature_distributions.png"):
+    def plot_feature_distributions(self, save_path="../results/wbc_features/evaluation_results_knn/feature_distributions.png"):
         """Visualize feature distributions across cell types."""
         if not self.feature_analysis:
             print("No feature analysis data available.")
@@ -549,7 +549,7 @@ class WBCEvaluator:
         print(f"Feature distributions saved to {save_path}")
         plt.close()
     
-    def export_results(self, save_path="../results/wbc_features/evaluation_results/wbc_table.csv"):
+    def export_results(self, save_path="../results/wbc_features/evaluation_results_knn/wbc_table.csv"):
         """Export detailed results to a CSV file for further analysis."""
         results_df = pd.DataFrame(self.results)
         results_df.to_csv(save_path, index=False)
@@ -560,9 +560,9 @@ def main():
     """Main entry point for the evaluation pipeline."""
     LABELS_CSV = "../results/wbc_features/labels.csv"
     IMAGES_DIR = "../data/input/JPEGImages"
-    LOG_FILE = f"../results/wbc_features/evaluation_results/evaluation_results_log.txt"
+    LOG_FILE = f"../results/wbc_features/evaluation_results_knn/evaluation_results_log.txt"
     
-    Path("../results/wbc_features/evaluation_results").mkdir(parents=True, exist_ok=True)
+    Path("../results/wbc_features/evaluation_results_knn").mkdir(parents=True, exist_ok=True)
     
     logger = Logger(LOG_FILE)
     sys.stdout = logger
@@ -586,10 +586,10 @@ def main():
         evaluator.print_report()
         evaluator.analyze_misclassifications()
         evaluator.suggest_threshold_adjustments()
-        evaluator.plot_confusion_matrix("../results/wbc_features/evaluation_results/confusion_matrix.png")
-        evaluator.plot_feature_distributions("../results/wbc_features/evaluation_results/feature_distributions.png")
-        evaluator.export_results("../results/wbc_features/evaluation_results/wbc_table.csv")
-        evaluator.export_detailed_metrics("../results/wbc_features/evaluation_results/detailed_metrics.csv")
+        evaluator.plot_confusion_matrix("../results/wbc_features/evaluation_results_knn/confusion_matrix.png")
+        evaluator.plot_feature_distributions("../results/wbc_features/evaluation_results_knn/feature_distributions.png")
+        evaluator.export_results("../results/wbc_features/evaluation_results_knn/wbc_table.csv")
+        evaluator.export_detailed_metrics("../results/wbc_features/evaluation_results_knn/detailed_metrics.csv")
         
         print("\n" + "="*60)
         print("Evaluation complete!")

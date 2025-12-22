@@ -199,6 +199,14 @@ def compute_platelet_parameters(df, img_shape):
     print(f"{'Cell Density':<25} | {round(density, 2)} / 10k px")
     print(f"{'Overlap Ratio':<25} | {round(overlap, 2)} %")
     print("=" * 50 + "\n")
+    return {
+        "cell_count": int(count),
+        "average_cell_size_px": round(avg_size, 2),
+        "circularity_index": round(avg_circ, 3),
+        "aspect_ratio": round(avg_ar, 3),
+        "cell_density_per_10k_px": round(density, 2),
+        "overlap_ratio_percent": round(overlap, 2),
+    }
 
 def GUI_extract_RBC_features(img):
     rbc_image, rbc_labels_all = label_RBC(img)

@@ -1,5 +1,5 @@
 WBC Classification Evaluation (with Precision, Recall, F1)
-Started at: 2025-12-21 23:38:15
+Started at: 2025-12-21 23:40:43
 ============================================================
 Loaded 411 labels from CSV
 Columns: ['Unnamed: 0', 'Image', 'Category']
@@ -30,30 +30,30 @@ EVALUATION REPORT
 
 📊 OVERALL METRICS
 --------------------------------------------------------------------------------
-Overall Accuracy: 65.54%
-Correct: 213/325
+Overall Accuracy: 72.62%
+Correct: 236/325
 
 📈 MACRO-AVERAGED METRICS (Unweighted Average Across Classes)
 --------------------------------------------------------------------------------
-Macro Precision:  54.02%
-Macro Recall:     43.04%
-Macro F1-Score:   45.68%
+Macro Precision:  55.25%
+Macro Recall:     45.88%
+Macro F1-Score:   45.94%
 
 ⚖️  WEIGHTED-AVERAGED METRICS (Weighted by Support)
 --------------------------------------------------------------------------------
-Weighted Precision:  72.02%
-Weighted Recall:     65.54%
-Weighted F1-Score:   67.80%
+Weighted Precision:  70.79%
+Weighted Recall:     72.62%
+Weighted F1-Score:   69.80%
 
 🎯 PER-CLASS DETAILED METRICS
 --------------------------------------------------------------------------------
 Class            Precision     Recall   F1-Score    Support
 --------------------------------------------------------------------------------
 BASOPHIL             0.00%      0.00%      0.00%          2
-EOSINOPHIL          46.15%     47.37%     46.75%         76
-LYMPHOCYTE          81.25%     76.47%     78.79%         34
-MONOCYTE            60.00%     14.29%     23.08%         21
-NEUTROPHIL          82.68%     77.08%     79.78%        192
+EOSINOPHIL          59.32%     46.05%     51.85%         76
+LYMPHOCYTE          74.36%     85.29%     79.45%         34
+MONOCYTE            66.67%      9.52%     16.67%         21
+NEUTROPHIL          75.89%     88.54%     81.73%        192
 
 ================================================================================
 METRIC DEFINITIONS:
@@ -69,9 +69,9 @@ METRIC DEFINITIONS:
 
 📋 Processing Status:
 --------------------------------------------------------------------------------
-  correct                  :  213
+  correct                  :  236
   image_not_found          :   47
-  incorrect                :  112
+  incorrect                :   89
   no_ground_truth          :    1
   no_wbc_detected          :   38
 
@@ -83,32 +83,27 @@ MISCLASSIFICATION ANALYSIS
 
 Common Misclassification Patterns:
 ------------------------------------------------------------
-  NEUTROPHIL → EOSINOPHIL       :  34 cases
-  EOSINOPHIL → NEUTROPHIL       :  24 cases
-  EOSINOPHIL → BASOPHIL         :  14 cases
-  NEUTROPHIL → BASOPHIL         :   7 cases
-  MONOCYTE → EOSINOPHIL         :   6 cases
-  MONOCYTE → NEUTROPHIL         :   6 cases
-  LYMPHOCYTE → BASOPHIL         :   5 cases
-    Images: [20, 134, 148, 347, 356]
-  MONOCYTE → BASOPHIL           :   5 cases
-    Images: [40, 104, 110, 312, 335]
-  NEUTROPHIL → LYMPHOCYTE       :   3 cases
-    Images: [34, 43, 212]
-  LYMPHOCYTE → EOSINOPHIL       :   2 cases
-    Images: [21, 55]
+  EOSINOPHIL → NEUTROPHIL       :  39 cases
+  NEUTROPHIL → EOSINOPHIL       :  18 cases
+  MONOCYTE → NEUTROPHIL         :  11 cases
+  MONOCYTE → EOSINOPHIL         :   5 cases
+    Images: [225, 278, 323, 335, 342]
+  NEUTROPHIL → LYMPHOCYTE       :   4 cases
+    Images: [34, 91, 198, 212]
+  MONOCYTE → LYMPHOCYTE         :   3 cases
+    Images: [40, 83, 127]
+  LYMPHOCYTE → NEUTROPHIL       :   3 cases
+    Images: [134, 148, 347]
+  EOSINOPHIL → LYMPHOCYTE       :   2 cases
+    Images: [41, 88]
   BASOPHIL → NEUTROPHIL         :   1 cases
     Images: [8]
-  EOSINOPHIL → MONOCYTE         :   1 cases
-    Images: [9]
-  MONOCYTE → LYMPHOCYTE         :   1 cases
-    Images: [83]
-  EOSINOPHIL → LYMPHOCYTE       :   1 cases
-    Images: [88]
   BASOPHIL → LYMPHOCYTE         :   1 cases
     Images: [132]
   LYMPHOCYTE → MONOCYTE         :   1 cases
     Images: [283]
+  LYMPHOCYTE → EOSINOPHIL       :   1 cases
+    Images: [356]
 
 ============================================================
 THRESHOLD ADJUSTMENT SUGGESTIONS
@@ -126,8 +121,8 @@ NEUTROPHIL:
     Mean Hue:         114.4 ± 19.0 (range: 55.2 - 145.6)
     Texture Variance: 64.4 ± 11.2
 
-  Classification accuracy for this type: 77.1% (148/192)
-  Often misclassified as: {'EOSINOPHIL': np.int64(34), 'BASOPHIL': np.int64(7), 'LYMPHOCYTE': np.int64(3)}
+  Classification accuracy for this type: 88.5% (170/192)
+  Often misclassified as: {'EOSINOPHIL': np.int64(18), 'LYMPHOCYTE': np.int64(4)}
 
 BASOPHIL:
 ----------------------------------------
@@ -156,8 +151,8 @@ EOSINOPHIL:
     Mean Hue:         96.7 ± 19.0 (range: 48.7 - 145.8)
     Texture Variance: 56.1 ± 10.1
 
-  Classification accuracy for this type: 47.4% (36/76)
-  Often misclassified as: {'NEUTROPHIL': np.int64(24), 'BASOPHIL': np.int64(14), 'MONOCYTE': np.int64(1), 'LYMPHOCYTE': np.int64(1)}
+  Classification accuracy for this type: 46.1% (35/76)
+  Often misclassified as: {'NEUTROPHIL': np.int64(39), 'LYMPHOCYTE': np.int64(2)}
 
 MONOCYTE:
 ----------------------------------------
@@ -171,8 +166,8 @@ MONOCYTE:
     Mean Hue:         87.8 ± 20.6 (range: 51.7 - 128.0)
     Texture Variance: 56.0 ± 13.6
 
-  Classification accuracy for this type: 14.3% (3/21)
-  Often misclassified as: {'EOSINOPHIL': np.int64(6), 'NEUTROPHIL': np.int64(6), 'BASOPHIL': np.int64(5), 'LYMPHOCYTE': np.int64(1)}
+  Classification accuracy for this type: 9.5% (2/21)
+  Often misclassified as: {'NEUTROPHIL': np.int64(11), 'EOSINOPHIL': np.int64(5), 'LYMPHOCYTE': np.int64(3)}
 
 LYMPHOCYTE:
 ----------------------------------------
@@ -186,18 +181,18 @@ LYMPHOCYTE:
     Mean Hue:         65.4 ± 12.6 (range: 38.8 - 96.8)
     Texture Variance: 46.1 ± 4.4
 
-  Classification accuracy for this type: 76.5% (26/34)
-  Often misclassified as: {'BASOPHIL': np.int64(5), 'EOSINOPHIL': np.int64(2), 'MONOCYTE': np.int64(1)}
+  Classification accuracy for this type: 85.3% (29/34)
+  Often misclassified as: {'NEUTROPHIL': np.int64(3), 'MONOCYTE': np.int64(1), 'EOSINOPHIL': np.int64(1)}
 
-Confusion matrix saved to ../results/wbc_features/evaluation_results/confusion_matrix.png
-Feature distributions saved to ../results/wbc_features/evaluation_results/feature_distributions.png
+Confusion matrix saved to ../results/wbc_features/evaluation_results_knn/confusion_matrix.png
+Feature distributions saved to ../results/wbc_features/evaluation_results_knn/feature_distributions.png
 
-Detailed results exported to ../results/wbc_features/evaluation_results/wbc_table.csv
+Detailed results exported to ../results/wbc_features/evaluation_results_knn/wbc_table.csv
 
-Detailed metrics exported to ../results/wbc_features/evaluation_results/detailed_metrics.csv
+Detailed metrics exported to ../results/wbc_features/evaluation_results_knn/detailed_metrics.csv
 
 ============================================================
 Evaluation complete!
-Finished at: 2025-12-21 23:38:19
-Log file saved to: ../results/wbc_features/evaluation_results/evaluation_results_log.txt
+Finished at: 2025-12-21 23:40:49
+Log file saved to: ../results/wbc_features/evaluation_results_knn/evaluation_results_log.txt
 ============================================================

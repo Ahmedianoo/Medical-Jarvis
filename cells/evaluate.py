@@ -8,8 +8,8 @@ from typing import Dict, List
 import sys
 from datetime import datetime
 
-from preprocess import preprocess_img
-from segment import wbc
+from cells.preprocess import preprocess_img
+from cells.segment import wbc
 from wbc_features import WBCClassifier
 
 

@@ -8,7 +8,7 @@ import streamlit.components.v1 as components
 st.set_page_config(layout="wide", page_title="Medical Jarvis")
 
 # Add the base project directory to path
-project_root = r"C:\Users\Dell\Desktop\Coding\jarvis-optimizers"
+project_root = r"C:\Users\ahmed\OneDrive\Desktop\Semester work\image\Project\jarvis-optimizers"
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
@@ -52,7 +52,7 @@ def get_base64_font(font_path):
     return base64.b64encode(data).decode()
 
 
-font_path = r"C:\Users\Dell\Desktop\Coding\jarvis-optimizers\ui\fonts\Aquire-BW0ox.otf"
+font_path = r"C:\Users\ahmed\OneDrive\Desktop\Semester work\image\Project\jarvis-optimizers\ui\fonts\Aquire-BW0ox.otf"
 font_base64 = get_base64_font(font_path)
 
 

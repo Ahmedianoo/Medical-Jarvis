@@ -4,7 +4,7 @@ import subprocess
 import os
 import time
 
-PROJECT_ROOT = r"C:\Users\Dell\Desktop\Coding\jarvis-optimizers"
+PROJECT_ROOT = r"C:\Users\ahmed\OneDrive\Desktop\Semester work\image\Project\jarvis-optimizers"
 TABS_OPTIONS = ["Home", "Red Blood Cells", "White Blood Cells", "Platelets"]
 CHART_OPTIONS = ["Statistics", "Area", "Circularity", "Aspect Ratio", "Correlations"]
 

@@ -71,8 +71,8 @@ def extract_features(contour):
 
             if angle < 90 and depth > 80:
                 finger_count += 1
-        if finger_count > 0:
-            finger_count += 1  # approximate thumb
+        # if finger_count > 0:
+        #     finger_count += 1  # approximate thumb
 
     x, y, w, h = cv2.boundingRect(contour)
     area = cv2.contourArea(contour)

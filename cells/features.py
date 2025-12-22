@@ -166,6 +166,14 @@ def compute_rbc_parameters(df, img_shape, rbc_mask):
     print(f"{'Cell Density':<25} | {round(density, 2)} / 10k px")
     print(f"{'Overlap Ratio':<25} | {round(overlap_ratio, 2)} %")
     print("="*50 + "\n")
+    return {
+        "cell_count": int(count),
+        "average_cell_size_px": round(avg_size, 2),
+        "circularity_index": round(avg_circ, 3),
+        "aspect_ratio": round(avg_ar, 3),
+        "cell_density_per_10k_px": round(density, 2),
+        "overlap_ratio_percent": round(overlap_ratio, 2),
+    }
 
 def compute_platelet_parameters(df, img_shape):
     """
@@ -192,39 +200,52 @@ def compute_platelet_parameters(df, img_shape):
     print(f"{'Overlap Ratio':<25} | {round(overlap, 2)} %")
     print("=" * 50 + "\n")
 
+def GUI_extract_RBC_features(img):
+    rbc_image, rbc_labels_all = label_RBC(img)
+    raw_rbc = regionprops(rbc_labels_all)
+    raw_rbc_count = len(raw_rbc)
+    df_rbc, rbc_filtered_mask = extract_filtered_rbc_features(
+        img, 
+        rbc_labels_all, 
+        min_area=1500, 
+        max_area=10000, 
+        remove_borders=True
+    )
+    return df_rbc, raw_rbc_count, compute_rbc_parameters(df_rbc, img.shape, rbc_filtered_mask)
+    
 
-img = cv2.imread('../data/input/JPEGImages/BloodImage_00002.jpg')
-rbc_image, rbc_labels_all = label_RBC(img)
-raw_rbc = regionprops(rbc_labels_all)
-raw_rbc_count = len(raw_rbc)
-print(f"{'Red Blood Cell Count':<25} | {raw_rbc_count}")
+# img = cv2.imread('../data/input/JPEGImages/BloodImage_00002.jpg')
+# rbc_image, rbc_labels_all = label_RBC(img)
+# raw_rbc = regionprops(rbc_labels_all)
+# raw_rbc_count = len(raw_rbc)
+# print(f"{'Red Blood Cell Count':<25} | {raw_rbc_count}")
 
-df_rbc, rbc_filtered_mask = extract_filtered_rbc_features(
-    img, 
-    rbc_labels_all, 
-    min_area=1500, 
-    max_area=10000, 
-    remove_borders=True
-)
-
-_, platelet_labels_all = label_Platelets(img)
-df_platelets, platelet_filtered_mask = extract_platelet_features(img, platelet_labels_all)
-
-compute_rbc_parameters(df_rbc, img.shape, rbc_filtered_mask)
-compute_platelet_parameters(df_platelets, img.shape)
-
-final_viz = np.zeros_like(img)
-final_viz[rbc_filtered_mask > 0] = [0, 255, 0]
-final_viz[platelet_filtered_mask > 0] = [255, 0, 0]
-overlay = cv2.addWeighted(img, 0.7, final_viz, 0.3, 0)
-
-# show_images(
-#     [rbc_filtered_mask, platelet_filtered_mask, overlay],
-#     ["RBC Mask (Filtered)", "Platelet Mask", "Combined Overlay"]
+# df_rbc, rbc_filtered_mask = extract_filtered_rbc_features(
+#     img, 
+#     rbc_labels_all, 
+#     min_area=1500, 
+#     max_area=10000, 
+#     remove_borders=True
 # )
 
-img_with_rbcs = visualize_filtered_rbcs(img, rbc_labels_all, df_rbc)
-final_combined_img = visualize_filtered_platelets(img_with_rbcs, platelet_labels_all, df_platelets)
+# _, platelet_labels_all = label_Platelets(img)
+# df_platelets, platelet_filtered_mask = extract_platelet_features(img, platelet_labels_all)
+
+# compute_rbc_parameters(df_rbc, img.shape, rbc_filtered_mask)
+# compute_platelet_parameters(df_platelets, img.shape)
+
+# final_viz = np.zeros_like(img)
+# final_viz[rbc_filtered_mask > 0] = [0, 255, 0]
+# final_viz[platelet_filtered_mask > 0] = [255, 0, 0]
+# overlay = cv2.addWeighted(img, 0.7, final_viz, 0.3, 0)
+
+# # show_images(
+# #     [rbc_filtered_mask, platelet_filtered_mask, overlay],
+# #     ["RBC Mask (Filtered)", "Platelet Mask", "Combined Overlay"]
+# # )
+
+# img_with_rbcs = visualize_filtered_rbcs(img, rbc_labels_all, df_rbc)
+# final_combined_img = visualize_filtered_platelets(img_with_rbcs, platelet_labels_all, df_platelets)
 
 # show_images(
 #     [img, final_combined_img],

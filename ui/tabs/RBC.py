@@ -33,7 +33,8 @@ def RBCs():
         with col_img:
             st.image(RBCs_Boxed, caption="RBCs Boxed Image", use_container_width=True)
 
-        dict_avg_stats["Cell Count"] = raw_rbc_count
+        print(dict_avg_stats)
+        dict_avg_stats["cell_count"] = raw_rbc_count
 
         with col_table:
             chart_options = ["Statistics", "Area", "Circularity", "Aspect Ratio", "Correlations"]

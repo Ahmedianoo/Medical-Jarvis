@@ -304,22 +304,22 @@ def process_batch(image_dir, annot_dir, viz_dir=None):
 
     return pd.DataFrame(results)
 
-INPUT_DIR = '../data/input/JPEGImages/'
-ANNOT_DIR = '../data/input/Annotations/'
-VIZ_DIR   = 'evaluation_viz/'
+# INPUT_DIR = '../data/input/JPEGImages/'
+# ANNOT_DIR = '../data/input/Annotations/'
+# VIZ_DIR   = 'evaluation_viz/'
 
-if os.path.exists(INPUT_DIR):
-    df = process_batch(INPUT_DIR, ANNOT_DIR, VIZ_DIR)
-    df.to_csv('final_evaluation_report.csv', index=False)
-    print("\n" + "="*30)
-    print("      FINAL SUMMARY")
-    print("="*30)
-    print(f"RBC Count Accuracy:      {df['RBC_Raw_Count_Acc'].mean():.2%} -> {df['RBC_Filt_Count_Acc'].mean():.2%}")
-    print(f"RBC Spatial Accuracy:    {df['RBC_Raw_Spatial_Acc'].mean():.2%} -> {df['RBC_Filt_Spatial_Acc'].mean():.2%}")
-    print("-" * 30)
-    print(f"Platelet Count Accuracy: {df['Plat_Raw_Count_Acc'].mean():.2%} -> {df['Plat_Filt_Count_Acc'].mean():.2%}")
-    print(f"Platelet Spatial Acc:    {df['Plat_Raw_Spatial_Acc'].mean():.2%} -> {df['Plat_Filt_Spatial_Acc'].mean():.2%}")
-    print(f"\nReport saved to 'final_evaluation_report.csv'")
-    generate_analysis_graphs(df, 'evaluation_graphs')
-else:
-    print("Input folder not found.")
+# if os.path.exists(INPUT_DIR):
+#     df = process_batch(INPUT_DIR, ANNOT_DIR, VIZ_DIR)
+#     df.to_csv('final_evaluation_report.csv', index=False)
+#     print("\n" + "="*30)
+#     print("      FINAL SUMMARY")
+#     print("="*30)
+#     print(f"RBC Count Accuracy:      {df['RBC_Raw_Count_Acc'].mean():.2%} -> {df['RBC_Filt_Count_Acc'].mean():.2%}")
+#     print(f"RBC Spatial Accuracy:    {df['RBC_Raw_Spatial_Acc'].mean():.2%} -> {df['RBC_Filt_Spatial_Acc'].mean():.2%}")
+#     print("-" * 30)
+#     print(f"Platelet Count Accuracy: {df['Plat_Raw_Count_Acc'].mean():.2%} -> {df['Plat_Filt_Count_Acc'].mean():.2%}")
+#     print(f"Platelet Spatial Acc:    {df['Plat_Raw_Spatial_Acc'].mean():.2%} -> {df['Plat_Filt_Spatial_Acc'].mean():.2%}")
+#     print(f"\nReport saved to 'final_evaluation_report.csv'")
+#     generate_analysis_graphs(df, 'evaluation_graphs')
+# else:
+#     print("Input folder not found.")

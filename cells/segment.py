@@ -420,19 +420,16 @@ def label_all_cells(img):
    img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
    final_result = img_rgb.copy()
 
-   # --- Draw RBCs (Green) ---
    for cell in regionprops(rbc_labels):
       y0, x0, y1, x1 = cell.bbox
       cv2.rectangle(final_result, (x0, y0), (x1, y1), (0, 255, 0), 1)
       cv2.putText(final_result, "RBC", (x0, max(y0 - 5, 0)), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 0), 1)
 
-   # --- Draw WBCs (Blue) ---
    for cell in regionprops(wbc_labels):
       y0, x0, y1, x1 = cell.bbox
       cv2.rectangle(final_result, (x0, y0), (x1, y1), (0, 0, 255), 2)
       cv2.putText(final_result, "WBC", (x0, max(y0 - 5, 0)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
 
-   # --- Draw Platelets (Red) ---
    for cell in regionprops(platelet_labels):
       y0, x0, y1, x1 = cell.bbox
       cv2.rectangle(final_result, (x0, y0), (x1, y1), (255, 0, 0), 1)

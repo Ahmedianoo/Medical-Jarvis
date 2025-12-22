@@ -20,12 +20,10 @@ def extract_filtered_rbc_features(img, labels, min_area=1500, max_area=10000, re
     valid_ids = []
     img_h, img_w = img.shape[:2]
     for prop in properties:
-        # 1. Border Filtering
         if remove_borders:
             y0, x0, y1, x1 = prop.bbox
             if y0 == 0 or x0 == 0 or y1 == img_h or x1 == img_w:
                 continue
-        # 2. Size Filtering
         if prop.area < min_area or prop.area > max_area:
             continue
         circularity = (4 * np.pi * prop.area) / (prop.perimeter**2) if prop.perimeter > 0 else 0
@@ -45,7 +43,6 @@ def extract_platelet_features(img, labels):
     plat_data = []
     valid_ids = []
     
-    # 1. Initialize mask to zeros (Safe default)
     filtered_mask = np.zeros_like(labels, dtype=np.uint8)
 
     for prop in properties:
@@ -61,7 +58,6 @@ def extract_platelet_features(img, labels):
             "Aspect Ratio": aspect_ratio
         })
         
-    # 2. Create the mask ONCE at the end
     if valid_ids:
         filtered_mask = np.where(np.isin(labels, valid_ids), labels, 0).astype(np.uint8)
         
@@ -102,7 +98,7 @@ def compute_rbc_parameters(df, img_shape,rbc_mask):
     avg_circ = df['Circularity'].mean() if not df.empty else 0
     avg_ar = df['Aspect Ratio'].mean() if not df.empty else 0
     density = (count / total_area) * 10000
-    # 1. Create a binary mask of all valid cells
+
     binary_mask = (rbc_mask > 0).astype(np.uint8)
     # 2. Close gaps: Watershed puts a 1px line between cells. We dilate to bridge them back 
     kernel = np.ones((3,3), np.uint8)
@@ -110,7 +106,7 @@ def compute_rbc_parameters(df, img_shape,rbc_mask):
     # 3. Find connected components (blobs) on this merged mask
     num_blobs, blob_labels, stats, _ = cv2.connectedComponentsWithStats(merged_mask)
     # 4. Identify clumps.
-    #    A blob is a "clump" if its area is significantly larger than the average single cell.
+    #  A blob is a "clump" if its area is significantly larger than the average single cell.
     clump_threshold = avg_size * 1.5
     clump_area_sum = 0
     total_cell_area = df['Area'].sum()
@@ -119,7 +115,7 @@ def compute_rbc_parameters(df, img_shape,rbc_mask):
         blob_area = stats[i, cv2.CC_STAT_AREA]
         if blob_area > clump_threshold:
             clump_area_sum += blob_area
-    #    Result is 0% if all cells are separated, 100% if everything is one giant blob.
+    # Result is 0% if all cells are separated, 100% if everything is one giant blob.
     overlap_ratio = (clump_area_sum / total_cell_area) * 100 if total_cell_area > 0 else 0
     print("\n" + "="*50)
     print("      RBC PARAMETER REPORT")
@@ -174,18 +170,15 @@ df_rbc, rbc_filtered_mask = extract_filtered_rbc_features(
     remove_borders=True
 )
 
-# 2. Platelet Processing
 _, platelet_labels_all = label_Platelets(img)
 df_platelets, platelet_filtered_mask = extract_platelet_features(img, platelet_labels_all)
 
-# 3. Reports
 compute_rbc_parameters(df_rbc, img.shape, rbc_filtered_mask)
 compute_platelet_parameters(df_platelets, img.shape)
 
-# 4. Pixel-based Visualization (Colored Masks)
 final_viz = np.zeros_like(img)
-final_viz[rbc_filtered_mask > 0] = [0, 255, 0]       # Green
-final_viz[platelet_filtered_mask > 0] = [255, 0, 0]  # Blue/Red (BGR vs RGB depending on lib)
+final_viz[rbc_filtered_mask > 0] = [0, 255, 0]
+final_viz[platelet_filtered_mask > 0] = [255, 0, 0]
 overlay = cv2.addWeighted(img, 0.7, final_viz, 0.3, 0)
 
 show_images(
@@ -193,7 +186,6 @@ show_images(
     ["RBC Mask (Filtered)", "Platelet Mask", "Combined Overlay"]
 )
 
-# 5. Box-based Visualization
 img_with_rbcs = visualize_filtered_rbcs(img, rbc_labels_all, df_rbc)
 final_combined_img = visualize_filtered_platelets(img_with_rbcs, platelet_labels_all, df_platelets)
 

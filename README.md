@@ -75,7 +75,7 @@ _WBC detection and classification using the web app_
   - Static gestures: FIST, PALM, POINT, UNKNOWN
   - Dynamic gestures: Motion detection using centroid displacement, direction estimation
 
-*Hand Gestures Demo:*  
+*Hand Gestures Demo(press to play):*  
 [![Hand Gesture Demo](images/hand_gestures.png)](images/gestures.mp4)
 
 ---

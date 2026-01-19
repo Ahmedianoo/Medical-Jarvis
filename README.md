@@ -1,4 +1,4 @@
-# Medical Jarvis – Blood Cell Analysis & Hand Gesture Interaction
+# Medical Jarvis – Blood Cells Analysis & Hand Gesture Interaction
 
 ---
 

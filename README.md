@@ -1,9 +1,9 @@
-# Jarvis – Blood Cell Analysis & Hand Gesture Interaction
+# Medical Jarvis – Blood Cell Analysis & Hand Gesture Interaction
 
 ---
 
 ## Overview
-Jarvis is an integrated computer vision system designed for automated blood smear image analysis and hand gesture-based interaction. It accurately detects, segments, and classifies red blood cells (RBCs), white blood cells (WBCs), and platelets, while enabling hands-free control through hand gestures. This dual functionality supports efficient medical analysis and touchless system control in laboratory environments.
+Medical Jarvis is an integrated computer vision system designed for automated blood smear image analysis and hand gesture-based interaction. It detects, segments, and classifies red blood cells (RBCs), white blood cells (WBCs), and platelets, while enabling hands-free control through hand gestures. This dual functionality supports efficient medical analysis and touchless system control in laboratory environments.
 
 ---
 
@@ -30,10 +30,10 @@ The system pipeline consists of:
   - Hessian-based boundary detection (Frangi filter) - used to enhance the watershed results
 
 *Before vs after preprocessing:*
-![RBC Preprocessing](images/after%20%clahe.png)
+![RBC Preprocessing](images/after%20clahe.png)
 
 *Post-Watershed Refinement:*  
-![RBC Post-Watershed](images/boxing%20%RBCs_113.png)
+![RBC Post-Watershed](images/boxing%20RBCs_113.png)
 
 _RBC detection using the web app_
 ![RBC Post-Watershed](images/rbc_stat2.png)

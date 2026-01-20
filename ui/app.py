@@ -20,7 +20,7 @@ from cells import segment, preprocess, wbc_features
 from cells.segment import label_all_cells, label_RBC, wbc, label_WBC, label_Platelets
 from cells.wbc_features import WBCClassifier
 from cells.preprocess import preprocess_img
-rom cells.features import extract_platelet_features, GUI_extract_RBC_features
+from cells.features import extract_platelet_features, GUI_extract_RBC_features
 
 # Import Tabs
 from tabs.Home import Home

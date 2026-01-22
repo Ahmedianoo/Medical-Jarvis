@@ -5,6 +5,8 @@
 ## Overview
 Medical Jarvis is an integrated computer vision system designed for automated blood smear image analysis and hand gesture-based interaction. It detects, segments, and classifies red blood cells (RBCs), white blood cells (WBCs), and platelets, while enabling hands-free control through hand gestures. This dual functionality supports efficient medical analysis and touchless system control in laboratory environments.
 
+For the full detailed report, see [Full Project Documentation](OPTIMIZERS.pdf)
+
 ---
 
 ## System Architecture
